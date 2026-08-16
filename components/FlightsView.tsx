@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition, FormEvent } from 'react';
-import { Plane } from 'lucide-react';
+import { Plane, Calendar } from 'lucide-react';
 import { PublicAttendee } from '@/lib/types';
 import { updateFlightDetails, setFlightsBookedStatus } from '@/app/actions';
 import { useUser } from './UserProvider';
@@ -86,38 +86,84 @@ export default function FlightsView({ attendees }: { attendees: PublicAttendee[]
         </div>
 
         <form onSubmit={handleSave} className="space-y-4">
-          <fieldset className="space-y-2">
-            <legend className="text-xs font-medium uppercase tracking-wide text-zinc-500">Outbound arrival </legend>
-            <input
-              type="text"
-              placeholder="Flight number, e.g. FR2104"
-              value={outboundFlight}
-              onChange={(e) => setOutboundFlight(e.target.value)}
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100"
-            />
-            <input
-              type="datetime-local"
-              value={outboundTime}
-              onChange={(e) => setOutboundTime(e.target.value)}
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100"
-            />
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-semibold text-zinc-200">Outbound</legend>
+
+            <div className="space-y-1.5">
+              <label
+                htmlFor="outbound-flight"
+                className="block text-xs font-medium uppercase tracking-wide text-zinc-500"
+              >
+                Flight number
+              </label>
+              <input
+                id="outbound-flight"
+                type="text"
+                placeholder="e.g. FR2104"
+                value={outboundFlight}
+                onChange={(e) => setOutboundFlight(e.target.value)}
+                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label
+                htmlFor="outbound-arrival"
+                className="block text-xs font-medium uppercase tracking-wide text-zinc-500"
+              >
+                Arrival date &amp; time
+              </label>
+              <div className="relative">
+                <Calendar className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                <input
+                  id="outbound-arrival"
+                  type="datetime-local"
+                  value={outboundTime}
+                  onChange={(e) => setOutboundTime(e.target.value)}
+                  className="w-full rounded-xl border border-zinc-700 bg-zinc-950 py-3 pl-10 pr-4 text-sm text-zinc-100 [color-scheme:dark]"
+                />
+              </div>
+            </div>
           </fieldset>
 
-          <fieldset className="space-y-2">
-            <legend className="text-xs font-medium uppercase tracking-wide text-zinc-500">Return departure</legend>
-            <input
-              type="text"
-              placeholder="Flight number, e.g. FR2105"
-              value={returnFlight}
-              onChange={(e) => setReturnFlight(e.target.value)}
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100"
-            />
-            <input
-              type="datetime-local"
-              value={returnTime}
-              onChange={(e) => setReturnTime(e.target.value)}
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100"
-            />
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-semibold text-zinc-200">Return</legend>
+
+            <div className="space-y-1.5">
+              <label
+                htmlFor="return-flight"
+                className="block text-xs font-medium uppercase tracking-wide text-zinc-500"
+              >
+                Flight number
+              </label>
+              <input
+                id="return-flight"
+                type="text"
+                placeholder="e.g. FR2105"
+                value={returnFlight}
+                onChange={(e) => setReturnFlight(e.target.value)}
+                className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3 text-sm text-zinc-100"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label
+                htmlFor="return-departure"
+                className="block text-xs font-medium uppercase tracking-wide text-zinc-500"
+              >
+                Departure date &amp; time
+              </label>
+              <div className="relative">
+                <Calendar className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                <input
+                  id="return-departure"
+                  type="datetime-local"
+                  value={returnTime}
+                  onChange={(e) => setReturnTime(e.target.value)}
+                  className="w-full rounded-xl border border-zinc-700 bg-zinc-950 py-3 pl-10 pr-4 text-sm text-zinc-100 [color-scheme:dark]"
+                />
+              </div>
+            </div>
           </fieldset>
 
           <button

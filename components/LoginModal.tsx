@@ -73,7 +73,7 @@ export default function LoginModal({
               value={attendeeId}
               onChange={(e) => setAttendeeId(e.target.value)}
               autoFocus
-              className="w-full appearance-none rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3.5 text-base text-zinc-100"
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3.5 text-base text-zinc-100 [color-scheme:dark]"
             >
               <option value="" disabled>
                 Select your name

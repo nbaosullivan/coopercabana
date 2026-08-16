@@ -5,6 +5,7 @@ import UserProvider from '@/components/UserProvider';
 import CurrencyProvider from '@/components/CurrencyProvider';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
+import ScrollToTop from '@/components/ScrollToTop';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 
 export const metadata: Metadata = {
@@ -44,6 +45,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <Header totalOutstanding={finances?.totalOutstanding ?? 0} />
             <main className="mx-auto max-w-lg px-4 pb-28 pt-4">{children}</main>
             <BottomNav />
+            <ScrollToTop />
             <ServiceWorkerRegister />
           </CurrencyProvider>
         </UserProvider>
