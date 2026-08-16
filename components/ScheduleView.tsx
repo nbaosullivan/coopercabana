@@ -39,7 +39,7 @@ export default function ScheduleView({
       ) : (
         <div className="relative space-y-4">
           {/* Vertical timeline rail */}
-          <div className="absolute bottom-4 left-[22px] top-4 w-px bg-emerald-500/30" />
+          <div className="absolute bottom-4 left-[24px] top-4 w-px bg-emerald-500/30" />
           {items.map((item) => (
             <ScheduleCard key={item.id} item={item} />
           ))}

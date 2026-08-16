@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ChevronDown, Clock, MessageCircle, Navigation } from 'lucide-react';
+import { ChevronDown, Clock, Navigation } from 'lucide-react';
 import { PublicAttendee } from '@/lib/types';
 import { ClusterMode, TaxiCluster, getTaxiClusters } from '@/lib/taxiClusters';
 import { useUser } from './UserProvider';
@@ -56,19 +56,6 @@ function uberShareLink(mode: ClusterMode): string {
     `&pickup[formatted_address]=${encodeURIComponent(pickup)}` +
     `&dropoff[formatted_address]=${encodeURIComponent(dropoff)}`
   );
-}
-
-function whatsappNudge(cluster: TaxiCluster, mode: ClusterMode, windowMinutes: number): string {
-  const names = cluster.members.map((m) => m.attendee.name.split(' ')[0]).join(', ');
-  const verb = mode === 'arrival' ? 'lands' : 'departs';
-  const meet = mode === 'arrival' ? 'meet at terminal exit B' : 'meet outside the villa';
-
-  const message =
-    cluster.members.length === 1
-      ? `${names} ${verb} at ${fmtTime(cluster.firstTime)} — anyone want to share ${vehicleNoun(cluster)} from the airport?`
-      : `Hey guys! ${clusterName(cluster)} (${names}) ${verb} within ${windowMinutes} mins of each other. Let's ${meet} for ${vehicleNoun(cluster)}!`;
-
-  return `https://wa.me/?text=${encodeURIComponent(message)}`;
 }
 
 function ClusterCard({
@@ -147,22 +134,14 @@ function ClusterCard({
       </div>
 
       {/* Actions */}
-      <div className="mt-4 grid grid-cols-2 gap-2">
+      <div className="mt-4">
         <a
           href={uberShareLink(mode)}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center justify-center gap-1.5 rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-cream transition active:scale-[0.98]"
+          className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-emerald-500 py-2.5 text-sm font-semibold text-cream transition active:scale-[0.98]"
         >
           <Navigation className="h-4 w-4" /> Order Shared Uber
-        </a>
-        <a
-          href={whatsappNudge(cluster, mode, windowMinutes)}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-1.5 rounded-xl border border-zinc-700 bg-zinc-950 py-2.5 text-sm font-medium text-zinc-200 transition active:scale-[0.98]"
-        >
-          <MessageCircle className="h-4 w-4 text-emerald-500" /> Nudge on WhatsApp
         </a>
       </div>
     </div>

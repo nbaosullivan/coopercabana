@@ -9,8 +9,8 @@ export default function ScheduleCard({ item }: { item: ScheduleItem }) {
   return (
     <div className="relative pl-14">
       {/* Start time badge on the timeline rail */}
-      <div className="absolute left-0 top-0 flex w-11 flex-col items-center">
-        <div className="flex h-11 w-11 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900 text-[10px] font-bold text-emerald-500">
+      <div className="absolute left-0 top-0 flex w-12 flex-col items-center">
+        <div className="flex h-12 w-12 items-center justify-center whitespace-nowrap rounded-full border border-zinc-800 bg-zinc-900 px-1 text-[9px] font-bold leading-none tracking-tight text-emerald-500">
           {start}
         </div>
       </div>

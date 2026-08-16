@@ -35,13 +35,6 @@ export async function getAttendeeById(id: string): Promise<Attendee | null> {
   return mockDb.attendees.find((a) => a.id === id) ?? null;
 }
 
-export async function verifyPin(attendeeId: string, pin: string): Promise<Attendee | null> {
-  const attendee = await getAttendeeById(attendeeId);
-  if (!attendee) return null;
-  if (attendee.pin !== pin) return null;
-  return attendee;
-}
-
 export async function updateAttendeeFlights(attendeeId: string, data: FlightData): Promise<Attendee> {
   const patch = {
     outbound_flight_details: data.outbound_flight_details,
@@ -100,23 +93,6 @@ export async function updateAttendeeTshirt(attendeeId: string, size: TshirtSize)
   const attendee = mockDb.attendees.find((a) => a.id === attendeeId);
   if (!attendee) throw new Error('Attendee not found');
   attendee.tshirt_size = size;
-  return attendee;
-}
-
-export async function resetAttendeePin(attendeeId: string, newPin: string): Promise<Attendee> {
-  if (isSupabaseConfigured && supabase) {
-    const { data: updated, error } = await supabase
-      .from('attendees')
-      .update({ pin: newPin })
-      .eq('id', attendeeId)
-      .select()
-      .single();
-    if (error) throw error;
-    return updated as Attendee;
-  }
-  const attendee = mockDb.attendees.find((a) => a.id === attendeeId);
-  if (!attendee) throw new Error('Attendee not found');
-  attendee.pin = newPin;
   return attendee;
 }
 

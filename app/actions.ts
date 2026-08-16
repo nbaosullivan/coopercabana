@@ -16,18 +16,25 @@ import {
 
 // --- Auth --------------------------------------------------------------
 
+// Shared app password — a lightweight gate for the group (everyone uses
+// "coops"). Override via APP_PASSWORD env var to change it without a code edit.
+const APP_PASSWORD = process.env.APP_PASSWORD ?? 'coops';
+
 export async function getAttendeeList(): Promise<PublicAttendee[]> {
   const attendees = await db.getAttendees();
   return attendees.map(stripPin);
 }
 
-export async function loginUser(attendeeId: string, pin: string): Promise<LoginResult> {
-  if (!attendeeId || !pin) {
-    return { success: false, error: 'Pick your name and enter your PIN.' };
+export async function loginUser(attendeeId: string, password: string): Promise<LoginResult> {
+  if (!attendeeId) {
+    return { success: false, error: 'Pick your name first.' };
   }
-  const attendee = await db.verifyPin(attendeeId, pin);
+  if (password !== APP_PASSWORD) {
+    return { success: false, error: 'Wrong password. Try again.' };
+  }
+  const attendee = await db.getAttendeeById(attendeeId);
   if (!attendee) {
-    return { success: false, error: 'Wrong PIN. Try again.' };
+    return { success: false, error: 'Attendee not found.' };
   }
   setSessionCookie(attendee.id);
   revalidatePath('/');
@@ -77,15 +84,6 @@ export async function updateTshirtSize(attendeeId: string, size: TshirtSize): Pr
   revalidatePath('/tasks');
   revalidatePath('/');
   return stripPin(updated);
-}
-
-export async function resetAttendeePin(attendeeId: string, newPin: string): Promise<{ success: boolean }> {
-  if (!/^\d{4}$/.test(newPin)) {
-    throw new Error('PIN must be exactly 4 digits.');
-  }
-  await db.resetAttendeePin(attendeeId, newPin);
-  revalidatePath('/tasks');
-  return { success: true };
 }
 
 // --- Money -----------------------------------------------------------------

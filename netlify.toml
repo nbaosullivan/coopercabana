@@ -1,0 +1,9 @@
+# Netlify config for the Coopercabana Next.js app.
+# The publish directory must NOT be the repo base — the Next.js runtime
+# (opennextjs-netlify) rejects that. `.next` is what the build populates.
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

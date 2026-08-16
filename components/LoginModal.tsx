@@ -13,7 +13,7 @@ export default function LoginModal({
   onSuccess: (u: PublicAttendee) => void;
 }) {
   const [attendeeId, setAttendeeId] = useState('');
-  const [pin, setPin] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -25,19 +25,19 @@ export default function LoginModal({
       setError('Pick your name first.');
       return;
     }
-    if (pin.length !== 4) {
-      setError('PIN must be 4 digits.');
+    if (!password) {
+      setError('Enter the group password.');
       return;
     }
 
     setLoading(true);
     try {
-      const result = await loginUser(attendeeId, pin);
+      const result = await loginUser(attendeeId, password);
       if (result.success && result.attendee) {
         onSuccess(result.attendee);
       } else {
         setError(result.error ?? 'Something went wrong.');
-        setPin('');
+        setPassword('');
       }
     } finally {
       setLoading(false);
@@ -66,12 +66,13 @@ export default function LoginModal({
               htmlFor="attendee"
               className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500"
             >
-              Your name
+              Who&apos;s this?
             </label>
             <select
               id="attendee"
               value={attendeeId}
               onChange={(e) => setAttendeeId(e.target.value)}
+              autoFocus
               className="w-full appearance-none rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3.5 text-base text-zinc-100"
             >
               <option value="" disabled>
@@ -87,22 +88,19 @@ export default function LoginModal({
 
           <div>
             <label
-              htmlFor="pin"
+              htmlFor="password"
               className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-zinc-500"
             >
-              4-digit PIN
+              Group password
             </label>
             <input
-              id="pin"
-              type="tel"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={4}
+              id="password"
+              type="password"
               autoComplete="off"
-              value={pin}
-              onChange={(e) => setPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3.5 text-center text-2xl tracking-[0.6em] text-zinc-100"
-              placeholder="••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••"
+              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3.5 text-base text-zinc-100"
             />
           </div>
 
@@ -110,7 +108,7 @@ export default function LoginModal({
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !attendeeId || !password}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-500 py-3.5 text-base font-semibold text-cream transition active:scale-[0.98] disabled:opacity-60"
           >
             {loading ? (
@@ -122,10 +120,6 @@ export default function LoginModal({
             )}
           </button>
         </form>
-
-        <p className="mt-4 text-center text-xs text-zinc-600">
-          Default PIN is 1234 unless you&apos;ve changed it.
-        </p>
       </div>
     </div>
   );

@@ -87,6 +87,9 @@ function buildCluster(id: number, sorted: PublicAttendee[], mode: ClusterMode): 
   const gapNotes = members.map((m, i) => {
     if (i === 0) return null;
     const name = m.attendee.name.split(' ')[0];
+    if (m.minutesAfterFirst === 0) {
+      return `${name} ${VERB[mode]} at the same time as ${firstName}`;
+    }
     return `${name} ${VERB[mode]} ${m.minutesAfterFirst} mins after ${firstName}`;
   });
 

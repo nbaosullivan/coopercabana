@@ -5,18 +5,31 @@ import UserProvider from '@/components/UserProvider';
 import CurrencyProvider from '@/components/CurrencyProvider';
 import Header from '@/components/Header';
 import BottomNav from '@/components/BottomNav';
+import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 
 export const metadata: Metadata = {
   title: 'Coopercabana',
   description: 'Málaga, 1–4 Sept — everything for the weekend, in one place.',
-  icons: { icon: '/coopercabana.png' },
+  icons: {
+    icon: '/coopercabana.png',
+    apple: '/apple-touch-icon.png',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Coopercabana',
+  },
+  formatDetection: {
+    telephone: false,
+  },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
-  themeColor: '#09090b',
+  viewportFit: 'cover',
+  themeColor: '#f2f0e6',
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -31,6 +44,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <Header totalOutstanding={finances?.totalOutstanding ?? 0} />
             <main className="mx-auto max-w-lg px-4 pb-28 pt-4">{children}</main>
             <BottomNav />
+            <ServiceWorkerRegister />
           </CurrencyProvider>
         </UserProvider>
       </body>
