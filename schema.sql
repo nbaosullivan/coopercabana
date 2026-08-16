@@ -9,6 +9,14 @@ DROP TABLE IF EXISTS expense_allocations;
 DROP TABLE IF EXISTS expenses;
 DROP TABLE IF EXISTS schedule_items;
 DROP TABLE IF EXISTS attendees;
+DROP TABLE IF EXISTS settings;
+
+-- 0. App settings (key/value config — e.g. default landing tab)
+CREATE TABLE settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
 -- 1. Attendees
 CREATE TABLE attendees (
@@ -58,6 +66,12 @@ CREATE TABLE expense_allocations (
 );
 
 -- SEED DATA
+
+-- Default landing tab: 'money' for now. Switch to 'schedule' (or any of
+-- schedule/money/flights/tasks) by updating this row later — no code change.
+INSERT INTO settings (key, value) VALUES
+('default_landing_page', 'money');
+
 INSERT INTO attendees (id, name, pin, is_admin, tshirt_size, flights_booked, outbound_flight_details, outbound_arrival_time, return_flight_details, return_departure_time) VALUES
 ('11111111-1111-1111-1111-111111111111', 'Nick (Organiser)', '1234', TRUE, 'L', TRUE, 'EZY8201 (GVA -> AGP)', '2026-09-01T14:30:00Z', 'EZY8202 (AGP -> GVA)', '2026-09-04T18:00:00Z'),
 ('22222222-2222-2222-2222-222222222222', 'Cooper (The Stag)', '1234', FALSE, 'XL', TRUE, 'BA0452 (LHR -> AGP)', '2026-09-01T12:00:00Z', 'BA0453 (AGP -> LHR)', '2026-09-04T20:15:00Z'),
@@ -85,11 +99,14 @@ INSERT INTO expense_allocations (expense_id, attendee_id, amount_owed, amount_pa
 
 -- Row Level Security: kept open for a small trusted-link app (no PII beyond first names).
 -- Tighten these policies if you plan to expose this beyond your group.
+ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE attendees ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schedule_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expense_allocations ENABLE ROW LEVEL SECURITY;
 
+-- Settings are read-only at runtime (writes happen in the SQL editor / dashboard).
+CREATE POLICY "public read settings" ON settings FOR SELECT USING (true);
 CREATE POLICY "public read/write attendees" ON attendees FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "public read schedule_items" ON schedule_items FOR SELECT USING (true);
 CREATE POLICY "public read expenses" ON expenses FOR SELECT USING (true);

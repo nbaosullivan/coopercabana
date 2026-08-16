@@ -15,7 +15,7 @@ const DETAILS: Record<
       { label: 'Name', value: "Nicholas O'Sullivan" },
       { label: 'Account number', value: '82326755', mono: true },
       { label: 'Sort code', value: '04-00-04', mono: true },
-      { label: 'Reference', value: 'STAG26', mono: true },
+      { label: 'Reference', value: 'COOPERCABANA', mono: true },
     ],
   },
   fr: {
@@ -24,7 +24,7 @@ const DETAILS: Record<
       { label: 'Name', value: 'M OSULLIVAN NICHOLAS' },
       { label: 'IBAN', value: 'FR76 3000 4031 9500 0010 4420 644', mono: true },
       { label: 'BIC', value: 'BNPAFRPPXXX', mono: true },
-      { label: 'Reference', value: 'STAG26', mono: true },
+      { label: 'Reference', value: 'COOPERCABANA', mono: true },
     ],
   },
 };

@@ -135,6 +135,27 @@ export async function getExpenseAllocations(): Promise<ExpenseAllocation[]> {
   return [...mockDb.expenseAllocations];
 }
 
+// --- Settings --------------------------------------------------------------
+
+export async function getSetting(key: string): Promise<string | null> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', key)
+        .maybeSingle();
+      if (error) throw error;
+      return (data as { value: string } | null)?.value ?? null;
+    } catch {
+      // Settings table may not exist yet (SQL not run in Supabase yet) —
+      // degrade gracefully and let the caller use its default.
+      return null;
+    }
+  }
+  return mockDb.settings[key] ?? null;
+}
+
 export async function getAllocationsForAttendee(attendeeId: string): Promise<ExpenseAllocation[]> {
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase

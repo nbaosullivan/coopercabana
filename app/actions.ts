@@ -12,6 +12,9 @@ import {
   FinancesSummary,
   GroupOverviewRow,
   ScheduleItem,
+  LandingPageKey,
+  LANDING_PAGES,
+  DEFAULT_LANDING_PAGE,
 } from '@/lib/types';
 
 // --- Auth --------------------------------------------------------------
@@ -51,6 +54,15 @@ export async function getCurrentUser(): Promise<PublicAttendee | null> {
   if (!id) return null;
   const attendee = await db.getAttendeeById(id);
   return attendee ? stripPin(attendee) : null;
+}
+
+// --- Settings ------------------------------------------------------------
+
+export async function getDefaultLandingPage(): Promise<LandingPageKey> {
+  const value = await db.getSetting('default_landing_page');
+  return (LANDING_PAGES as readonly string[]).includes(value ?? '')
+    ? (value as LandingPageKey)
+    : DEFAULT_LANDING_PAGE;
 }
 
 // --- Flights -------------------------------------------------------------

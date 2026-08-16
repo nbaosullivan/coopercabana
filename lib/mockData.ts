@@ -18,6 +18,7 @@ const globalForMock = globalThis as unknown as {
     scheduleItems: ScheduleItem[];
     expenses: Expense[];
     expenseAllocations: ExpenseAllocation[];
+    settings: Record<string, string>;
   };
 };
 
@@ -200,7 +201,11 @@ function seed() {
     },
   ];
 
-  return { attendees, scheduleItems, expenses, expenseAllocations };
+  const settings: Record<string, string> = {
+    default_landing_page: 'money',
+  };
+
+  return { attendees, scheduleItems, expenses, expenseAllocations, settings };
 }
 
 if (!globalForMock.__stagMock) {

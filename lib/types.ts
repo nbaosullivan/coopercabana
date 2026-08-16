@@ -1,5 +1,14 @@
 export type TshirtSize = 'S' | 'M' | 'L' | 'XL' | '2XL' | '3XL';
 
+// --- Settings -----------------------------------------------------------
+
+/** Valid tabs in the bottom nav — the set of allowed landing pages. */
+export const LANDING_PAGES = ['schedule', 'money', 'flights', 'tasks'] as const;
+export type LandingPageKey = (typeof LANDING_PAGES)[number];
+
+/** Used when the settings table has no row yet (or an invalid value). */
+export const DEFAULT_LANDING_PAGE: LandingPageKey = 'money';
+
 export interface Attendee {
   id: string;
   name: string;
