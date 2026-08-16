@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition, FormEvent } from 'react';
-import { Plane, Calendar } from 'lucide-react';
+import { Plane, Calendar, Clock } from 'lucide-react';
 import { PublicAttendee } from '@/lib/types';
 import { updateFlightDetails, setFlightsBookedStatus } from '@/app/actions';
 import { useUser } from './UserProvider';
@@ -131,12 +131,15 @@ export default function FlightsView({ attendees }: { attendees: PublicAttendee[]
                     className="w-full rounded-xl border border-zinc-700 bg-zinc-950 py-3 pl-10 pr-3 text-sm text-zinc-100 [color-scheme:dark]"
                   />
                 </div>
-                <input
-                  type="time"
-                  value={outboundTime}
-                  onChange={(e) => setOutboundTime(e.target.value)}
-                  className="w-28 shrink-0 rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-3 text-sm text-zinc-100 [color-scheme:dark]"
-                />
+                <div className="relative shrink-0">
+                  <Clock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                  <input
+                    type="time"
+                    value={outboundTime}
+                    onChange={(e) => setOutboundTime(e.target.value)}
+                    className="w-32 rounded-xl border border-zinc-700 bg-zinc-950 py-3 pl-9 pr-3 text-sm text-zinc-100 [color-scheme:dark]"
+                  />
+                </div>
               </div>
             </div>
           </fieldset>
@@ -179,12 +182,15 @@ export default function FlightsView({ attendees }: { attendees: PublicAttendee[]
                     className="w-full rounded-xl border border-zinc-700 bg-zinc-950 py-3 pl-10 pr-3 text-sm text-zinc-100 [color-scheme:dark]"
                   />
                 </div>
-                <input
-                  type="time"
-                  value={returnTime}
-                  onChange={(e) => setReturnTime(e.target.value)}
-                  className="w-28 shrink-0 rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-3 text-sm text-zinc-100 [color-scheme:dark]"
-                />
+                <div className="relative shrink-0">
+                  <Clock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                  <input
+                    type="time"
+                    value={returnTime}
+                    onChange={(e) => setReturnTime(e.target.value)}
+                    className="w-32 rounded-xl border border-zinc-700 bg-zinc-950 py-3 pl-9 pr-3 text-sm text-zinc-100 [color-scheme:dark]"
+                  />
+                </div>
               </div>
             </div>
           </fieldset>

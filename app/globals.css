@@ -39,3 +39,27 @@ a:focus-visible {
   outline: 2px solid #426b5b; /* deep teal */
   outline-offset: 2px;
 }
+
+/*
+ * Normalize Safari date/time inputs.
+ * WebKit bug 198959: temporal inputs collapse to a sliver when empty and
+ * apply their own internal padding, making them look cramped/broken.
+ * Zeroing the internal datetime-edit padding + giving the value a height
+ * lets the input's own px/py padding control the box consistently.
+ */
+input::-webkit-date-and-time-value {
+  height: 1.5em;
+}
+input::-webkit-datetime-edit,
+input::-webkit-datetime-edit-fields-wrapper,
+input::-webkit-datetime-edit-text,
+input::-webkit-datetime-edit-hour-field,
+input::-webkit-datetime-edit-minute-field,
+input::-webkit-datetime-edit-second-field,
+input::-webkit-datetime-edit-meridiem-field,
+input::-webkit-datetime-edit-ampm-field,
+input::-webkit-datetime-edit-day-field,
+input::-webkit-datetime-edit-month-field,
+input::-webkit-datetime-edit-year-field {
+  padding: 0;
+}
