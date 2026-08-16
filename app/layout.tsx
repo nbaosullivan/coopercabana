@@ -10,7 +10,7 @@ import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 
 export const metadata: Metadata = {
   title: 'Coopercabana',
-  description: 'Málaga, 1–4 Sept — everything for the weekend, in one place.',
+  description: 'Málaga, 1–4 Sept - everything for the stag do, in one place.',
   icons: {
     icon: '/coopercabana.png',
     apple: '/apple-touch-icon.png',
