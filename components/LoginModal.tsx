@@ -3,7 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { loginUser } from '@/app/actions';
 import { PublicAttendee } from '@/lib/types';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ChevronDown } from 'lucide-react';
 
 export default function LoginModal({
   attendees,
@@ -68,22 +68,25 @@ export default function LoginModal({
             >
               Who&apos;s this?
             </label>
-            <select
-              id="attendee"
-              value={attendeeId}
-              onChange={(e) => setAttendeeId(e.target.value)}
-              autoFocus
-              className="w-full rounded-xl border border-zinc-700 bg-zinc-950 px-4 py-3.5 text-base text-zinc-100 [color-scheme:dark]"
-            >
-              <option value="" disabled>
-                Select your name
-              </option>
-              {attendees.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.name}
+            <div className="relative">
+              <select
+                id="attendee"
+                value={attendeeId}
+                onChange={(e) => setAttendeeId(e.target.value)}
+                autoFocus
+                className="w-full appearance-none rounded-xl border border-zinc-700 bg-zinc-950 py-3.5 pl-4 pr-10 text-base text-zinc-100 [color-scheme:dark]"
+              >
+                <option value="" disabled>
+                  Select your name
                 </option>
-              ))}
-            </select>
+                {attendees.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+            </div>
           </div>
 
           <div>

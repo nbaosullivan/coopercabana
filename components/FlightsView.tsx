@@ -7,13 +7,14 @@ import { updateFlightDetails, setFlightsBookedStatus } from '@/app/actions';
 import { useUser } from './UserProvider';
 import TaxiClusters from './TaxiClusters';
 
-function toLocalInputValue(iso: string | null) {
-  if (!iso) return '';
+function toLocalParts(iso: string | null) {
+  if (!iso) return { date: '', time: '' };
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(
-    d.getMinutes()
-  )}`;
+  return {
+    date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
+    time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
+  };
 }
 
 export default function FlightsView({ attendees }: { attendees: PublicAttendee[] }) {
@@ -22,9 +23,13 @@ export default function FlightsView({ attendees }: { attendees: PublicAttendee[]
   const [saved, setSaved] = useState(false);
 
   const [outboundFlight, setOutboundFlight] = useState(user?.outbound_flight_details ?? '');
-  const [outboundTime, setOutboundTime] = useState(toLocalInputValue(user?.outbound_arrival_time ?? null));
+  const outbound = toLocalParts(user?.outbound_arrival_time ?? null);
+  const [outboundDate, setOutboundDate] = useState(outbound.date);
+  const [outboundTime, setOutboundTime] = useState(outbound.time);
   const [returnFlight, setReturnFlight] = useState(user?.return_flight_details ?? '');
-  const [returnTime, setReturnTime] = useState(toLocalInputValue(user?.return_departure_time ?? null));
+  const ret = toLocalParts(user?.return_departure_time ?? null);
+  const [returnDate, setReturnDate] = useState(ret.date);
+  const [returnTime, setReturnTime] = useState(ret.time);
 
   if (!user) return null;
 
@@ -41,9 +46,11 @@ export default function FlightsView({ attendees }: { attendees: PublicAttendee[]
     startTransition(async () => {
       const updated = await updateFlightDetails(user!.id, {
         outbound_flight_details: outboundFlight,
-        outbound_arrival_time: outboundTime ? new Date(outboundTime).toISOString() : null,
+        outbound_arrival_time:
+          outboundDate && outboundTime ? new Date(`${outboundDate}T${outboundTime}`).toISOString() : null,
         return_flight_details: returnFlight,
-        return_departure_time: returnTime ? new Date(returnTime).toISOString() : null,
+        return_departure_time:
+          returnDate && returnTime ? new Date(`${returnDate}T${returnTime}`).toISOString() : null,
       });
       setUser(updated);
       setSaved(true);
@@ -113,14 +120,22 @@ export default function FlightsView({ attendees }: { attendees: PublicAttendee[]
               >
                 Arrival date &amp; time
               </label>
-              <div className="relative">
-                <Calendar className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+              <div className="flex gap-2">
+                <div className="relative min-w-0 flex-1">
+                  <Calendar className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                  <input
+                    id="outbound-arrival"
+                    type="date"
+                    value={outboundDate}
+                    onChange={(e) => setOutboundDate(e.target.value)}
+                    className="w-full rounded-xl border border-zinc-700 bg-zinc-950 py-3 pl-10 pr-3 text-sm text-zinc-100 [color-scheme:dark]"
+                  />
+                </div>
                 <input
-                  id="outbound-arrival"
-                  type="datetime-local"
+                  type="time"
                   value={outboundTime}
                   onChange={(e) => setOutboundTime(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-700 bg-zinc-950 py-3 pl-10 pr-4 text-sm text-zinc-100 [color-scheme:dark]"
+                  className="w-28 shrink-0 rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-3 text-sm text-zinc-100 [color-scheme:dark]"
                 />
               </div>
             </div>
@@ -153,14 +168,22 @@ export default function FlightsView({ attendees }: { attendees: PublicAttendee[]
               >
                 Departure date &amp; time
               </label>
-              <div className="relative">
-                <Calendar className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+              <div className="flex gap-2">
+                <div className="relative min-w-0 flex-1">
+                  <Calendar className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+                  <input
+                    id="return-departure"
+                    type="date"
+                    value={returnDate}
+                    onChange={(e) => setReturnDate(e.target.value)}
+                    className="w-full rounded-xl border border-zinc-700 bg-zinc-950 py-3 pl-10 pr-3 text-sm text-zinc-100 [color-scheme:dark]"
+                  />
+                </div>
                 <input
-                  id="return-departure"
-                  type="datetime-local"
+                  type="time"
                   value={returnTime}
                   onChange={(e) => setReturnTime(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-700 bg-zinc-950 py-3 pl-10 pr-4 text-sm text-zinc-100 [color-scheme:dark]"
+                  className="w-28 shrink-0 rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-3 text-sm text-zinc-100 [color-scheme:dark]"
                 />
               </div>
             </div>
