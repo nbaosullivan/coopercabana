@@ -42,11 +42,19 @@ a:focus-visible {
 
 /*
  * Normalize Safari date/time inputs.
- * WebKit bug 198959: temporal inputs collapse to a sliver when empty and
- * apply their own internal padding, making them look cramped/broken.
- * Zeroing the internal datetime-edit padding + giving the value a height
- * lets the input's own px/py padding control the box consistently.
+ * WebKit bug 198959: temporal inputs collapse to a sliver when empty —
+ * the internal value wrapper reports 0 height on iOS. Fix: floor the
+ * input's own height (min-height beats the collapsed content) and zero
+ * the internal datetime-edit padding so the input's px/py padding
+ * controls the box consistently.
  */
+input[type='date'],
+input[type='time'],
+input[type='datetime-local'],
+input[type='month'],
+input[type='week'] {
+  min-height: 2.75rem; /* 44px — matches py-3 text-sm inputs */
+}
 input::-webkit-date-and-time-value {
   height: 1.5em;
 }
