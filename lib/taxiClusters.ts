@@ -1,4 +1,5 @@
 import { PublicAttendee } from './types';
+import { formatZoned } from './time';
 
 /**
  * Taxi Cluster / Shared Rides utility.
@@ -65,7 +66,7 @@ export function vehicleForSize(n: number): string {
 }
 
 function fmtHHMM(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  return formatZoned(iso, { hour: '2-digit', minute: '2-digit' });
 }
 
 function buildCluster(id: number, sorted: PublicAttendee[], mode: ClusterMode): TaxiCluster {

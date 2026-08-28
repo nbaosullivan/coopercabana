@@ -32,9 +32,9 @@ function seed() {
       tshirt_size: 'L',
       flights_booked: true,
       outbound_flight_details: 'EZY8201 (GVA -> AGP)',
-      outbound_arrival_time: '2026-09-01T14:30:00Z',
+      outbound_arrival_time: '2026-09-01T12:30:00Z',
       return_flight_details: 'EZY8202 (AGP -> GVA)',
-      return_departure_time: '2026-09-04T18:00:00Z',
+      return_departure_time: '2026-09-04T16:00:00Z',
     },
     {
       id: '22222222-2222-2222-2222-222222222222',
@@ -44,9 +44,9 @@ function seed() {
       tshirt_size: 'XL',
       flights_booked: true,
       outbound_flight_details: 'BA0452 (LHR -> AGP)',
-      outbound_arrival_time: '2026-09-01T12:00:00Z',
+      outbound_arrival_time: '2026-09-01T10:00:00Z',
       return_flight_details: 'BA0453 (AGP -> LHR)',
-      return_departure_time: '2026-09-04T20:15:00Z',
+      return_departure_time: '2026-09-04T18:15:00Z',
     },
     {
       id: '33333333-3333-3333-3333-333333333333',
@@ -68,9 +68,9 @@ function seed() {
       tshirt_size: 'L',
       flights_booked: true,
       outbound_flight_details: 'FR2104 (STN -> AGP)',
-      outbound_arrival_time: '2026-09-01T15:10:00Z',
+      outbound_arrival_time: '2026-09-01T13:10:00Z',
       return_flight_details: 'FR2105 (AGP -> STN)',
-      return_departure_time: '2026-09-04T16:30:00Z',
+      return_departure_time: '2026-09-04T14:30:00Z',
     },
   ];
 

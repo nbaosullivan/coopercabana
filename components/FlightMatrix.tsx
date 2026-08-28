@@ -1,8 +1,9 @@
 import { PlaneLanding } from 'lucide-react';
 import { PublicAttendee } from '@/lib/types';
+import { formatZoned } from '@/lib/time';
 
 function formatTime(iso: string) {
-  return new Date(iso).toLocaleString('en-GB', {
+  return formatZoned(iso, {
     weekday: 'short',
     hour: '2-digit',
     minute: '2-digit',

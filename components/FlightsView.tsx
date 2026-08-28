@@ -4,18 +4,9 @@ import { useState, useTransition, FormEvent } from 'react';
 import { Plane, Calendar, Clock } from 'lucide-react';
 import { PublicAttendee } from '@/lib/types';
 import { updateFlightDetails, setFlightsBookedStatus } from '@/app/actions';
+import { wallClockToISO, toZoneParts } from '@/lib/time';
 import { useUser } from './UserProvider';
 import TaxiClusters from './TaxiClusters';
-
-function toLocalParts(iso: string | null) {
-  if (!iso) return { date: '', time: '' };
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return {
-    date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`,
-    time: `${pad(d.getHours())}:${pad(d.getMinutes())}`,
-  };
-}
 
 export default function FlightsView({ attendees }: { attendees: PublicAttendee[] }) {
   const { user, setUser } = useUser();
@@ -23,11 +14,11 @@ export default function FlightsView({ attendees }: { attendees: PublicAttendee[]
   const [saved, setSaved] = useState(false);
 
   const [outboundFlight, setOutboundFlight] = useState(user?.outbound_flight_details ?? '');
-  const outbound = toLocalParts(user?.outbound_arrival_time ?? null);
+  const outbound = toZoneParts(user?.outbound_arrival_time ?? null);
   const [outboundDate, setOutboundDate] = useState(outbound.date);
   const [outboundTime, setOutboundTime] = useState(outbound.time);
   const [returnFlight, setReturnFlight] = useState(user?.return_flight_details ?? '');
-  const ret = toLocalParts(user?.return_departure_time ?? null);
+  const ret = toZoneParts(user?.return_departure_time ?? null);
   const [returnDate, setReturnDate] = useState(ret.date);
   const [returnTime, setReturnTime] = useState(ret.time);
 
@@ -47,10 +38,10 @@ export default function FlightsView({ attendees }: { attendees: PublicAttendee[]
       const updated = await updateFlightDetails(user!.id, {
         outbound_flight_details: outboundFlight,
         outbound_arrival_time:
-          outboundDate && outboundTime ? new Date(`${outboundDate}T${outboundTime}`).toISOString() : null,
+          outboundDate && outboundTime ? wallClockToISO(outboundDate, outboundTime) : null,
         return_flight_details: returnFlight,
         return_departure_time:
-          returnDate && returnTime ? new Date(`${returnDate}T${returnTime}`).toISOString() : null,
+          returnDate && returnTime ? wallClockToISO(returnDate, returnTime) : null,
       });
       setUser(updated);
       setSaved(true);
@@ -118,7 +109,7 @@ export default function FlightsView({ attendees }: { attendees: PublicAttendee[]
                 htmlFor="outbound-arrival"
                 className="block text-xs font-medium uppercase tracking-wide text-zinc-500"
               >
-                Arrival date &amp; time
+                Arrival date &amp; time <span className="normal-case text-zinc-600">(Málaga)</span>
               </label>
               <div className="flex gap-2">
                 <div className="relative min-w-0 flex-1">
@@ -169,7 +160,7 @@ export default function FlightsView({ attendees }: { attendees: PublicAttendee[]
                 htmlFor="return-departure"
                 className="block text-xs font-medium uppercase tracking-wide text-zinc-500"
               >
-                Departure date &amp; time
+                Departure date &amp; time <span className="normal-case text-zinc-600">(Málaga)</span>
               </label>
               <div className="flex gap-2">
                 <div className="relative min-w-0 flex-1">

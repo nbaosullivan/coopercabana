@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { ChevronDown, Clock, Navigation } from 'lucide-react';
 import { PublicAttendee } from '@/lib/types';
 import { ClusterMode, TaxiCluster, getTaxiClusters } from '@/lib/taxiClusters';
+import { formatZoned } from '@/lib/time';
 import { useUser } from './UserProvider';
 
 const WINDOWS = [30, 45, 60];
@@ -12,7 +13,7 @@ const VILLA = 'Calle Benalmádena 12, Málaga';
 const AIRPORT = 'Málaga Airport (AGP), Málaga';
 
 function fmtDayTime(iso: string): string {
-  return new Date(iso).toLocaleString('en-GB', {
+  return formatZoned(iso, {
     weekday: 'short',
     day: 'numeric',
     month: 'short',
@@ -22,7 +23,7 @@ function fmtDayTime(iso: string): string {
 }
 
 function fmtTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  return formatZoned(iso, { hour: '2-digit', minute: '2-digit' });
 }
 
 function clusterEmoji(cluster: TaxiCluster): string {
