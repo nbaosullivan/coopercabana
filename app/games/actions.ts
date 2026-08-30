@@ -694,6 +694,11 @@ export async function addPrompt(
   revalidatePath('/tasks');
 }
 
+export async function getPromptsForAdmin(kind: string) {
+  await requireAdmin();
+  return gamesDb.getPrompts(kind);
+}
+
 export async function togglePrompt(promptId: string, isActive: boolean): Promise<void> {
   await requireAdmin();
   await gamesDb.setPromptActive(promptId, isActive);

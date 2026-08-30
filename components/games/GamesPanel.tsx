@@ -3,6 +3,7 @@
 import { GameSnapshot, PublicAttendee } from '@/lib/types';
 import { getGameKind } from '@/lib/games/registry';
 import NewGameCard from './NewGameCard';
+import PromptPoolEditor from './PromptPoolEditor';
 import './index';
 
 export default function GamesPanel({
@@ -44,7 +45,12 @@ export default function GamesPanel({
         );
       })}
 
-      {me.is_admin && <NewGameCard allAttendees={allAttendees} />}
+      {me.is_admin && (
+        <>
+          <NewGameCard allAttendees={allAttendees} />
+          <PromptPoolEditor />
+        </>
+      )}
     </div>
   );
 }
