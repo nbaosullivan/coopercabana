@@ -1,4 +1,15 @@
-import { Attendee, ScheduleItem, Expense, ExpenseAllocation } from './types';
+import {
+  Attendee,
+  ScheduleItem,
+  Expense,
+  ExpenseAllocation,
+  Game,
+  GamePlayer,
+  GameRound,
+  GameAssignment,
+  GameEvent,
+  GamePrompt,
+} from './types';
 
 // ---------------------------------------------------------------------------
 // In-memory mock dataset. Used automatically whenever Supabase env vars are
@@ -19,8 +30,17 @@ const globalForMock = globalThis as unknown as {
     expenses: Expense[];
     expenseAllocations: ExpenseAllocation[];
     settings: Record<string, string>;
+    games: Game[];
+    gamePlayers: GamePlayer[];
+    gameRounds: GameRound[];
+    gameAssignments: GameAssignment[];
+    gameEvents: GameEvent[];
+    gamePrompts: GamePrompt[];
   };
 };
+
+let mockSeq = 0;
+export const mockId = (prefix: string) => `${prefix}-${++mockSeq}`;
 
 function seed() {
   const attendees: Attendee[] = [
@@ -205,7 +225,80 @@ function seed() {
     default_landing_page: 'money',
   };
 
-  return { attendees, scheduleItems, expenses, expenseAllocations, settings };
+  const assassinActions = [
+    'Do ten press-ups',
+    'Sing a full chorus out loud',
+    'Do their best worm impression on the floor',
+    'Speak in an American accent for a full minute',
+    'Order a drink they have never had before',
+    'Give a stranger a compliment about their shoes',
+    'Take their shirt off',
+    'Do a handstand against a wall',
+    'Attempt to speak Spanish to a local for 30 seconds',
+    'Carry someone on their back for ten paces',
+    'Do the Macarena, all the way through',
+    'Down a drink in one',
+  ];
+  const assassinLocations = [
+    'in a crowd',
+    'in or beside the pool',
+    'in a taxi',
+    'at a bar, while ordering',
+    'on the beach',
+    'in the villa kitchen',
+    'within sight of a member of staff',
+    'on a balcony or terrace',
+    'while everyone is sat down eating',
+    'in the street, in daylight',
+  ];
+  const skateChallenges = [
+    '30 press-ups',
+    '20 burpees',
+    'Hold a plank for 90 seconds',
+    '15 pull-ups on anything solid',
+    'Down a pint of water in 10 seconds',
+  ];
+
+  const gamePrompts: GamePrompt[] = [
+    ...assassinActions.map((text) => ({
+      id: mockId('prompt'),
+      kind: 'assassin',
+      category: 'action' as const,
+      text,
+      is_active: true,
+      created_at: new Date().toISOString(),
+    })),
+    ...assassinLocations.map((text) => ({
+      id: mockId('prompt'),
+      kind: 'assassin',
+      category: 'location' as const,
+      text,
+      is_active: true,
+      created_at: new Date().toISOString(),
+    })),
+    ...skateChallenges.map((text) => ({
+      id: mockId('prompt'),
+      kind: 'skate',
+      category: 'challenge' as const,
+      text,
+      is_active: true,
+      created_at: new Date().toISOString(),
+    })),
+  ];
+
+  return {
+    attendees,
+    scheduleItems,
+    expenses,
+    expenseAllocations,
+    settings,
+    games: [] as Game[],
+    gamePlayers: [] as GamePlayer[],
+    gameRounds: [] as GameRound[],
+    gameAssignments: [] as GameAssignment[],
+    gameEvents: [] as GameEvent[],
+    gamePrompts,
+  };
 }
 
 if (!globalForMock.__stagMock) {
