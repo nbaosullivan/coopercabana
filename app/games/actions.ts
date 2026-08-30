@@ -104,6 +104,20 @@ export async function getActiveGameSnapshots(): Promise<GameSnapshot[]> {
   return Promise.all(games.map((game) => buildSnapshot(game, meId)));
 }
 
+export async function getPendingGameCount(): Promise<number> {
+  const meId = getSessionAttendeeId();
+  if (!meId) return 0;
+
+  const games = await gamesDb.getActiveGames();
+  let count = 0;
+  for (const game of games) {
+    const snapshot = await buildSnapshot(game, meId);
+    if (snapshot.hasUnseen) count += 1;
+    count += snapshot.awaitingMyVerdict.length;
+  }
+  return count;
+}
+
 export async function markMissionSeen(assignmentId: string): Promise<void> {
   const meId = getSessionAttendeeId();
   if (!meId) return;

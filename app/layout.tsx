@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { getCurrentUser, getAttendeeList, getFinancesForUser } from '@/app/actions';
+import { getPendingGameCount } from '@/app/games/actions';
 import UserProvider from '@/components/UserProvider';
 import CurrencyProvider from '@/components/CurrencyProvider';
 import Header from '@/components/Header';
@@ -36,6 +37,7 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const [user, attendees] = await Promise.all([getCurrentUser(), getAttendeeList()]);
   const finances = user ? await getFinancesForUser(user.id) : null;
+  const pendingGameCount = user ? await getPendingGameCount() : 0;
 
   return (
     <html lang="en">
@@ -44,7 +46,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <CurrencyProvider>
             <Header totalOutstanding={finances?.totalOutstanding ?? 0} />
             <main className="mx-auto max-w-lg px-4 pb-28 pt-4">{children}</main>
-            <BottomNav />
+            <BottomNav pendingGameCount={pendingGameCount} />
             <ScrollToTop />
             <ServiceWorkerRegister />
           </CurrencyProvider>
