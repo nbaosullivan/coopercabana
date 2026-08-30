@@ -85,6 +85,144 @@ export interface LoginResult {
   attendee?: PublicAttendee;
 }
 
+// --- Games engine ---------------------------------------------------------
+
+export const GAME_KINDS = ['assassin', 'skate'] as const;
+export type GameKind = (typeof GAME_KINDS)[number];
+
+export type GameStatus = 'draft' | 'active' | 'ended';
+export type RoundStatus = 'open' | 'closed';
+export type AssignmentStatus =
+  | 'active'
+  | 'claimed'
+  | 'succeeded'
+  | 'failed'
+  | 'disputed'
+  | 'void';
+export type AssignmentVisibility = 'private' | 'public';
+export type PromptCategory = 'action' | 'location' | 'challenge';
+
+export interface Game {
+  id: string;
+  kind: GameKind;
+  title: string;
+  status: GameStatus;
+  config: Record<string, unknown>;
+  created_by: string | null;
+  created_at: string;
+  started_at: string | null;
+  ended_at: string | null;
+}
+
+export interface GamePlayer {
+  id: string;
+  game_id: string;
+  attendee_id: string;
+  state: Record<string, unknown>;
+  is_out: boolean;
+  joined_at: string;
+}
+
+export interface GameRound {
+  id: string;
+  game_id: string;
+  round_number: number;
+  status: RoundStatus;
+  payload: Record<string, unknown>;
+  created_at: string;
+  closed_at: string | null;
+}
+
+export interface GameAssignment {
+  id: string;
+  game_id: string;
+  round_id: string;
+  actor_id: string;
+  arbiter_id: string | null;
+  payload: Record<string, unknown>;
+  visibility: AssignmentVisibility;
+  status: AssignmentStatus;
+  claim_note: string | null;
+  seen_at: string | null;
+  claimed_at: string | null;
+  resolved_at: string | null;
+  resolved_by: string | null;
+  created_at: string;
+}
+
+export interface GameEvent {
+  id: string;
+  game_id: string;
+  round_id: string | null;
+  assignment_id: string | null;
+  actor_id: string | null;
+  type: string;
+  payload: Record<string, unknown>;
+  is_public: boolean;
+  created_at: string;
+}
+
+export interface GamePrompt {
+  id: string;
+  kind: string;
+  category: PromptCategory;
+  text: string;
+  is_active: boolean;
+  created_at: string;
+}
+
+// --- Kind-specific payload shapes ----------------------------------------
+
+export interface AssassinPayload {
+  target_id: string;
+  action: string;
+  location: string;
+}
+
+export interface AssassinPlayerState {
+  score: number;
+}
+
+export interface SkateRoundPayload {
+  setter_id: string;
+  challenge: string;
+  /**
+   * 'setting'  - the setter is attempting their own challenge; nobody else
+   *              has an assignment yet.
+   * 'chasing'  - the setter landed it; everyone else must now match it.
+   */
+  phase: 'setting' | 'chasing';
+  /** null while phase is 'setting'. false ends the round with no letters. */
+  setter_landed: boolean | null;
+}
+
+export interface SkatePlayerState {
+  letters: string; // e.g. "SK"
+}
+
+// --- Client-facing view models -------------------------------------------
+
+/** Everything one player needs to render their view of one game. */
+export interface GameSnapshot {
+  game: Game;
+  players: Array<{
+    attendee: PublicAttendee;
+    state: Record<string, unknown>;
+    is_out: boolean;
+  }>;
+  currentRound: GameRound | null;
+  /** The signed-in player's own assignment for the current round. */
+  myAssignment: GameAssignment | null;
+  /** Assignments awaiting THIS player's confirmation as arbiter. */
+  awaitingMyVerdict: GameAssignment[];
+  /** Public assignments (SKATE) for the current round. Never private ones. */
+  publicAssignments: GameAssignment[];
+  /** Most recent public events, newest first, capped at 30. */
+  feed: GameEvent[];
+  /** True when the player has an assignment they have not opened yet. */
+  hasUnseen: boolean;
+}
+
 export function stripPin(a: Attendee): PublicAttendee {
   const { pin, ...rest } = a;
   return rest;
