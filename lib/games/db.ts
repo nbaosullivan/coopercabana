@@ -364,6 +364,40 @@ export async function closeRound(roundId: string): Promise<GameRound> {
   return round;
 }
 
+export async function getRoundById(roundId: string): Promise<GameRound | null> {
+  if (isSupabaseConfigured && supabase) {
+    const { data, error } = await supabase
+      .from('game_rounds')
+      .select('*')
+      .eq('id', roundId)
+      .maybeSingle();
+    if (error) throw error;
+    return (data as GameRound) ?? null;
+  }
+  return mockDb.gameRounds.find((r) => r.id === roundId) ?? null;
+}
+
+export async function updateRoundPayload(
+  roundId: string,
+  payload: Record<string, unknown>
+): Promise<GameRound> {
+  if (isSupabaseConfigured && supabase) {
+    const { data, error } = await supabase
+      .from('game_rounds')
+      .update({ payload })
+      .eq('id', roundId)
+      .select()
+      .single();
+    if (error) throw error;
+    return data as GameRound;
+  }
+
+  const round = mockDb.gameRounds.find((r) => r.id === roundId);
+  if (!round) throw new Error('Round not found');
+  round.payload = payload;
+  return round;
+}
+
 export interface CreateAssignmentInput {
   game_id: string;
   round_id: string;
