@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Crosshair, Send, CheckCircle2, XCircle, HelpCircle, ShieldAlert } from 'lucide-react';
 import { GameViewProps } from '@/lib/games/registry';
@@ -220,6 +220,11 @@ export function AssassinAdminView({ snapshot }: GameViewProps) {
     });
   }
 
+  useEffect(() => {
+    loadAdminView();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [snapshot.game.id]);
+
   function handleDeal() {
     const activeCount = adminView?.assignments.filter((a) => a.status === 'active').length ?? 0;
     if (activeCount > 0 && !confirmDeal) {
@@ -247,10 +252,6 @@ export function AssassinAdminView({ snapshot }: GameViewProps) {
       await endGame(snapshot.game.id);
       router.refresh();
     });
-  }
-
-  if (!adminView) {
-    loadAdminView();
   }
 
   const counts = {
