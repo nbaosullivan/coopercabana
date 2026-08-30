@@ -2,19 +2,24 @@
 
 import { useState, useTransition } from 'react';
 import { CheckCircle2, XCircle, Shirt } from 'lucide-react';
-import { PublicAttendee, TshirtSize, GroupOverviewRow } from '@/lib/types';
+import { PublicAttendee, TshirtSize, GroupOverviewRow, GameSnapshot } from '@/lib/types';
 import { updateTshirtSize, setFlightsBookedStatus } from '@/app/actions';
 import { useUser } from './UserProvider';
 import { useCurrency } from './CurrencyProvider';
+import GamesPanel from './games/GamesPanel';
 
 const SIZES: TshirtSize[] = ['S', 'M', 'L', 'XL', '2XL', '3XL'];
 
 export default function TasksView({
   allAttendees,
   groupOverview,
+  snapshots,
+  me,
 }: {
   allAttendees: PublicAttendee[];
   groupOverview: GroupOverviewRow[];
+  snapshots: GameSnapshot[];
+  me: PublicAttendee | null;
 }) {
   const { user, setUser } = useUser();
   const { format } = useCurrency();
@@ -83,6 +88,9 @@ export default function TasksView({
           </button>
         </div>
       </div>
+
+      {/* Games */}
+      <GamesPanel snapshots={snapshots} me={me ?? user} allAttendees={allAttendees} />
 
       {/* Admin dashboard */}
       {user.is_admin && (
