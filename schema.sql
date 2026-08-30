@@ -111,3 +111,161 @@ CREATE POLICY "public read/write attendees" ON attendees FOR ALL USING (true) WI
 CREATE POLICY "public read schedule_items" ON schedule_items FOR SELECT USING (true);
 CREATE POLICY "public read expenses" ON expenses FOR SELECT USING (true);
 CREATE POLICY "public read/write expense_allocations" ON expense_allocations FOR ALL USING (true) WITH CHECK (true);
+
+-- ===========================================================================
+-- GAMES ENGINE
+-- Generic scaffolding shared by every mini-game. A game "kind" is just a
+-- string; the app layer knows how to render and resolve each one.
+-- ===========================================================================
+
+DROP TABLE IF EXISTS game_events;
+DROP TABLE IF EXISTS game_assignments;
+DROP TABLE IF EXISTS game_rounds;
+DROP TABLE IF EXISTS game_players;
+DROP TABLE IF EXISTS game_prompts;
+DROP TABLE IF EXISTS games;
+
+-- A single instance of a mini-game.
+CREATE TABLE games (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  kind TEXT NOT NULL CHECK (kind IN ('assassin', 'skate')),
+  title TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'active', 'ended')),
+  -- Kind-specific settings. assassin: {}, skate: { "word": "SKATE" }
+  config JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_by UUID REFERENCES attendees(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  started_at TIMESTAMPTZ,
+  ended_at TIMESTAMPTZ
+);
+
+-- Who is in a game, and their running state.
+-- assassin: { "score": 0 }   skate: { "letters": "SK" }
+CREATE TABLE game_players (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+  attendee_id UUID NOT NULL REFERENCES attendees(id) ON DELETE CASCADE,
+  state JSONB NOT NULL DEFAULT '{}'::jsonb,
+  is_out BOOLEAN NOT NULL DEFAULT FALSE,
+  joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (game_id, attendee_id)
+);
+
+-- A unit of play. assassin: one deal of missions. skate: one "set".
+-- skate payload: { "setter_id": "...", "challenge": "30 push ups",
+--                  "phase": "setting" | "chasing", "setter_landed": true|false|null }
+CREATE TABLE game_rounds (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+  round_number INT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed')),
+  payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  closed_at TIMESTAMPTZ,
+  UNIQUE (game_id, round_number)
+);
+
+-- One player's obligation inside a round. THE core table.
+-- assassin payload: { "target_id": "...", "action": "moon someone",
+--                     "location": "in a crowd" }   visibility 'private'
+-- skate payload:    { "challenge": "30 push ups" } visibility 'public'
+CREATE TABLE game_assignments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+  round_id UUID NOT NULL REFERENCES game_rounds(id) ON DELETE CASCADE,
+  -- The player who must DO something.
+  actor_id UUID NOT NULL REFERENCES attendees(id) ON DELETE CASCADE,
+  -- Who is allowed to confirm/deny a claim. assassin: the target.
+  -- skate: the setter. NULL = admin-only resolution.
+  arbiter_id UUID REFERENCES attendees(id) ON DELETE SET NULL,
+  payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+  visibility TEXT NOT NULL DEFAULT 'private' CHECK (visibility IN ('private', 'public')),
+  status TEXT NOT NULL DEFAULT 'active'
+    CHECK (status IN ('active', 'claimed', 'succeeded', 'failed', 'disputed', 'void')),
+  claim_note TEXT,
+  seen_at TIMESTAMPTZ,      -- powers the "new mission" badge + briefing modal
+  claimed_at TIMESTAMPTZ,
+  resolved_at TIMESTAMPTZ,
+  resolved_by UUID REFERENCES attendees(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX game_assignments_actor_idx ON game_assignments (actor_id, status);
+CREATE INDEX game_assignments_arbiter_idx ON game_assignments (arbiter_id, status);
+CREATE INDEX game_assignments_round_idx ON game_assignments (round_id);
+
+-- Append-only feed. Drives the "what's happening" ticker and is the audit
+-- trail when someone insists they definitely did the thing.
+CREATE TABLE game_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  game_id UUID NOT NULL REFERENCES games(id) ON DELETE CASCADE,
+  round_id UUID REFERENCES game_rounds(id) ON DELETE CASCADE,
+  assignment_id UUID REFERENCES game_assignments(id) ON DELETE CASCADE,
+  actor_id UUID REFERENCES attendees(id) ON DELETE SET NULL,
+  type TEXT NOT NULL,     -- game_started | round_opened | claimed | confirmed
+                          -- | denied | letter_given | admin_override | game_ended
+  payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+  -- FALSE while it would spoil a live mission; flipped TRUE on resolution.
+  is_public BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX game_events_game_idx ON game_events (game_id, created_at DESC);
+
+-- Admin-editable content pools. Assassin draws one 'action' + one 'location'.
+CREATE TABLE game_prompts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  kind TEXT NOT NULL DEFAULT 'assassin',
+  category TEXT NOT NULL CHECK (category IN ('action', 'location', 'challenge')),
+  text TEXT NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX game_prompts_pool_idx ON game_prompts (kind, category, is_active);
+
+INSERT INTO game_prompts (kind, category, text) VALUES
+('assassin', 'action', 'Do ten press-ups'),
+('assassin', 'action', 'Sing a full chorus out loud'),
+('assassin', 'action', 'Do their best worm impression on the floor'),
+('assassin', 'action', 'Speak in an American accent for a full minute'),
+('assassin', 'action', 'Order a drink they have never had before'),
+('assassin', 'action', 'Give a stranger a compliment about their shoes'),
+('assassin', 'action', 'Take their shirt off'),
+('assassin', 'action', 'Do a handstand against a wall'),
+('assassin', 'action', 'Attempt to speak Spanish to a local for 30 seconds'),
+('assassin', 'action', 'Carry someone on their back for ten paces'),
+('assassin', 'action', 'Do the Macarena, all the way through'),
+('assassin', 'action', 'Down a drink in one'),
+('assassin', 'location', 'in a crowd'),
+('assassin', 'location', 'in or beside the pool'),
+('assassin', 'location', 'in a taxi'),
+('assassin', 'location', 'at a bar, while ordering'),
+('assassin', 'location', 'on the beach'),
+('assassin', 'location', 'in the villa kitchen'),
+('assassin', 'location', 'within sight of a member of staff'),
+('assassin', 'location', 'on a balcony or terrace'),
+('assassin', 'location', 'while everyone is sat down eating'),
+('assassin', 'location', 'in the street, in daylight');
+
+INSERT INTO game_prompts (kind, category, text) VALUES
+('skate', 'challenge', '30 press-ups'),
+('skate', 'challenge', '20 burpees'),
+('skate', 'challenge', 'Hold a plank for 90 seconds'),
+('skate', 'challenge', '15 pull-ups on anything solid'),
+('skate', 'challenge', 'Down a pint of water in 10 seconds');
+
+ALTER TABLE games ENABLE ROW LEVEL SECURITY;
+ALTER TABLE game_players ENABLE ROW LEVEL SECURITY;
+ALTER TABLE game_rounds ENABLE ROW LEVEL SECURITY;
+ALTER TABLE game_assignments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE game_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE game_prompts ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "public read/write games" ON games FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "public read/write game_players" ON game_players FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "public read/write game_rounds" ON game_rounds FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "public read/write game_assignments" ON game_assignments FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "public read/write game_events" ON game_events FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "public read/write game_prompts" ON game_prompts FOR ALL USING (true) WITH CHECK (true);
+
