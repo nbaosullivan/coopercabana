@@ -5,6 +5,7 @@ import { getSessionAttendeeId } from '@/lib/session';
 import * as db from '@/lib/db';
 import * as gamesDb from '@/lib/games/db';
 import { addLetter, isEliminated, skateChasers } from '@/lib/games/skate';
+import { buildAssassinRound } from '@/lib/games/assassin';
 import {
   stripPin,
   Game,
@@ -424,4 +425,283 @@ export async function reportSkateAttempt(assignmentId: string, matched: boolean)
 
 function toRoundPayloadRecord(payload: SkateRoundPayload): Record<string, unknown> {
   return { ...payload };
+}
+
+// ---------------------------------------------------------------------------
+// Admin actions. Everything Nick can do from his phone. All guarded by
+// requireAdmin(), which itself derives identity from the session cookie.
+// ---------------------------------------------------------------------------
+
+async function requireAdmin() {
+  const id = getSessionAttendeeId();
+  const me = id ? await db.getAttendeeById(id) : null;
+  if (!me?.is_admin) throw new Error('Admin only');
+  return me;
+}
+
+export async function createGameAction(
+  kind: Game['kind'],
+  title: string,
+  attendeeIds: string[],
+  config: Record<string, unknown> = {}
+): Promise<Game> {
+  const admin = await requireAdmin();
+  const game = await gamesDb.createGame({ kind, title, config, created_by: admin.id });
+
+  const initialState = kind === 'assassin' ? { score: 0 } : { letters: '' };
+  await gamesDb.addPlayers(game.id, attendeeIds, initialState);
+
+  revalidatePath('/tasks');
+  return game;
+}
+
+export async function startGame(gameId: string): Promise<void> {
+  await requireAdmin();
+  const game = await gamesDb.getGameById(gameId);
+  if (!game) throw new Error('Game not found');
+  await gamesDb.updateGameStatus(gameId, 'active');
+
+  await gamesDb.logEvent({
+    game_id: gameId,
+    type: 'game_started',
+    payload: { title: game.title },
+    is_public: true,
+  });
+
+  revalidatePath('/tasks');
+}
+
+/** The big red button. Deals a fresh round of Assassin missions. */
+export async function dealAssassinRound(gameId: string): Promise<void> {
+  await requireAdmin();
+
+  const game = await gamesDb.getGameById(gameId);
+  if (!game) throw new Error('Game not found');
+  if (game.kind !== 'assassin') throw new Error('Not an Assassin game');
+  if (game.status !== 'active') throw new Error('Game is not active');
+
+  const allPlayers = await gamesDb.getGamePlayers(gameId);
+  const livePlayers = allPlayers.filter((p) => !p.is_out);
+  if (livePlayers.length < 3) {
+    throw new Error('Need at least 3 players to deal a round');
+  }
+
+  const [actionPrompts, locationPrompts] = await Promise.all([
+    gamesDb.getPrompts('assassin', 'action'),
+    gamesDb.getPrompts('assassin', 'location'),
+  ]);
+  const actions = actionPrompts.filter((p) => p.is_active).map((p) => p.text);
+  const locations = locationPrompts.filter((p) => p.is_active).map((p) => p.text);
+  if (actions.length === 0 || locations.length === 0) {
+    throw new Error('Add at least one active action and location prompt first');
+  }
+
+  // Void only assignments still `active` in the currently open round. Anything
+  // already `claimed` stays open so a slow target can still confirm it and
+  // the hunter keeps the point they earned.
+  const openRound = await gamesDb.getCurrentRound(gameId);
+  if (openRound && openRound.status === 'open') {
+    const existing = await gamesDb.getAssignmentsForRound(openRound.id);
+    for (const assignment of existing) {
+      if (assignment.status === 'active') {
+        await gamesDb.updateAssignment(assignment.id, { status: 'void' });
+        await gamesDb.logEvent({
+          game_id: gameId,
+          round_id: openRound.id,
+          assignment_id: assignment.id,
+          type: 'admin_override',
+          payload: { reason: 'voided by new round' },
+          is_public: false,
+        });
+      }
+    }
+    await gamesDb.closeRound(openRound.id);
+  }
+
+  const rounds = await gamesDb.getRounds(gameId);
+  const nextNumber = rounds.length + 1;
+  const round = await gamesDb.createRound(gameId, nextNumber, {});
+
+  const missions = buildAssassinRound(
+    livePlayers.map((p) => p.attendee_id),
+    actions,
+    locations
+  );
+
+  await gamesDb.createAssignments(
+    missions.map((m) => ({
+      game_id: gameId,
+      round_id: round.id,
+      actor_id: m.actor_id,
+      arbiter_id: m.arbiter_id,
+      payload: { ...m.payload },
+      visibility: 'private' as const,
+      status: 'active' as const,
+    }))
+  );
+
+  // No payload details in the public line — that would spoil it. This line
+  // is the in-app delivery signal; players check their own mission for detail.
+  await gamesDb.logEvent({
+    game_id: gameId,
+    round_id: round.id,
+    type: 'round_opened',
+    payload: { round: nextNumber, message: `Round ${nextNumber} is live. Check your mission.` },
+    is_public: true,
+  });
+
+  revalidatePath('/tasks');
+}
+
+export async function endGame(gameId: string): Promise<void> {
+  await requireAdmin();
+  const game = await gamesDb.getGameById(gameId);
+  if (!game) throw new Error('Game not found');
+
+  await gamesDb.updateGameStatus(gameId, 'ended');
+  await gamesDb.logEvent({
+    game_id: gameId,
+    type: 'game_ended',
+    payload: { title: game.title },
+    is_public: true,
+  });
+
+  revalidatePath('/tasks');
+}
+
+export async function adminOverrideAssignment(
+  assignmentId: string,
+  status: GameAssignment['status']
+): Promise<void> {
+  const admin = await requireAdmin();
+  const assignment = await gamesDb.getAssignmentById(assignmentId);
+  if (!assignment) throw new Error('Assignment not found');
+
+  await gamesDb.updateAssignment(assignmentId, {
+    status,
+    resolved_at: new Date().toISOString(),
+    resolved_by: admin.id,
+  });
+
+  // Forcing an Assassin claim to succeed still awards the point.
+  if (status === 'succeeded') {
+    const player = (await gamesDb.getGamePlayers(assignment.game_id)).find(
+      (p) => p.attendee_id === assignment.actor_id
+    );
+    const currentScore = ((player?.state as AssassinPlayerState | undefined)?.score ?? 0) as number;
+    await gamesDb.updatePlayerState(assignment.game_id, assignment.actor_id, {
+      score: currentScore + 1,
+    });
+  }
+
+  await gamesDb.logEvent({
+    game_id: assignment.game_id,
+    round_id: assignment.round_id,
+    assignment_id: assignment.id,
+    actor_id: admin.id,
+    type: 'admin_override',
+    payload: { status },
+    is_public: true,
+  });
+
+  revalidatePath('/tasks');
+}
+
+/** Admin-only: directly set a SKATE player's letters (e.g. undo a bad call). */
+export async function setPlayerLetters(
+  gameId: string,
+  attendeeId: string,
+  letters: string
+): Promise<void> {
+  const admin = await requireAdmin();
+  const word =
+    ((await gamesDb.getGameById(gameId))?.config?.word as string | undefined) ?? 'SKATE';
+
+  await gamesDb.updatePlayerState(gameId, attendeeId, { letters });
+  await gamesDb.setPlayerOut(gameId, attendeeId, isEliminated(letters, word));
+
+  await gamesDb.logEvent({
+    game_id: gameId,
+    actor_id: admin.id,
+    type: 'admin_override',
+    payload: { attendeeId, letters },
+    is_public: false,
+  });
+
+  revalidatePath('/tasks');
+}
+
+export interface AdminAssignmentRow extends GameAssignment {
+  actorName: string;
+  targetName: string | null;
+}
+
+export interface AdminGameView {
+  game: Game;
+  players: Array<{ attendeeId: string; name: string; state: Record<string, unknown>; is_out: boolean }>;
+  currentRound: Awaited<ReturnType<typeof gamesDb.getCurrentRound>>;
+  assignments: AdminAssignmentRow[];
+  disputes: AdminAssignmentRow[];
+}
+
+export async function getAdminGameView(gameId: string): Promise<AdminGameView> {
+  await requireAdmin();
+
+  const game = await gamesDb.getGameById(gameId);
+  if (!game) throw new Error('Game not found');
+
+  const [players, currentRound, attendees] = await Promise.all([
+    gamesDb.getGamePlayers(gameId),
+    gamesDb.getCurrentRound(gameId),
+    db.getAttendees(),
+  ]);
+  const attendeeById = new Map(attendees.map((a) => [a.id, a]));
+
+  let assignments: GameAssignment[] = [];
+  if (currentRound) {
+    assignments = await gamesDb.getAssignmentsForRound(currentRound.id);
+  }
+
+  const rows: AdminAssignmentRow[] = assignments.map((a) => ({
+    ...a,
+    actorName: attendeeById.get(a.actor_id)?.name ?? 'Unknown',
+    targetName: a.payload.target_id
+      ? attendeeById.get(a.payload.target_id as string)?.name ?? 'Unknown'
+      : null,
+  }));
+
+  return {
+    game,
+    players: players.map((p) => ({
+      attendeeId: p.attendee_id,
+      name: attendeeById.get(p.attendee_id)?.name ?? 'Unknown',
+      state: p.state,
+      is_out: p.is_out,
+    })),
+    currentRound,
+    assignments: rows,
+    disputes: rows.filter((r) => r.status === 'disputed'),
+  };
+}
+
+export async function addPrompt(
+  kind: string,
+  category: 'action' | 'location' | 'challenge',
+  text: string
+): Promise<void> {
+  await requireAdmin();
+  await gamesDb.createPrompt(kind, category, text);
+  revalidatePath('/tasks');
+}
+
+export async function togglePrompt(promptId: string, isActive: boolean): Promise<void> {
+  await requireAdmin();
+  await gamesDb.setPromptActive(promptId, isActive);
+  revalidatePath('/tasks');
+}
+
+export async function removePrompt(promptId: string): Promise<void> {
+  await requireAdmin();
+  await gamesDb.deletePrompt(promptId);
+  revalidatePath('/tasks');
 }
