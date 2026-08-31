@@ -7,6 +7,7 @@ import { updateFlightDetails, setFlightsBookedStatus } from '@/app/actions';
 import { wallClockToISO, toZoneParts } from '@/lib/time';
 import { useUser } from './UserProvider';
 import TaxiClusters from './TaxiClusters';
+import BoardingPassCard from './BoardingPassCard';
 
 export default function FlightsView({ attendees }: { attendees: PublicAttendee[] }) {
   const { user, setUser } = useUser();
@@ -195,6 +196,8 @@ export default function FlightsView({ attendees }: { attendees: PublicAttendee[]
           </button>
         </form>
       </div>
+
+      <BoardingPassCard attendeeId={user.id} />
 
       <TaxiClusters attendees={attendees} />
     </div>
