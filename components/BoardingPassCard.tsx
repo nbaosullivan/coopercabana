@@ -4,8 +4,11 @@ import { useState } from 'react';
 import { Ticket, X, Download } from 'lucide-react';
 import { boardingPassCandidates } from '@/lib/boardingPass';
 
-function usePassSlot(candidates: string[]) {
-  const [src, setSrc] = useState<string | null>(candidates[0] ?? null);
+function usePassSlot(candidates: string[], initialSrc: string | null) {
+  // initialSrc is the server-resolved verdict (existing file or null) — it is
+  // authoritative. We do NOT fall back to candidates[0] here, or someone with
+  // no pass would render the card (and flash a broken image) until onError.
+  const [src, setSrc] = useState<string | null>(initialSrc);
   function onError() {
     if (!src) return;
     const i = candidates.indexOf(src);
@@ -37,9 +40,15 @@ function PassImage({
   );
 }
 
-export default function BoardingPassCard({ attendeeId }: { attendeeId: string }) {
-  const outbound = usePassSlot(boardingPassCandidates(attendeeId, 'outbound'));
-  const ret = usePassSlot(boardingPassCandidates(attendeeId, 'return'));
+export default function BoardingPassCard({
+  attendeeId,
+  passes,
+}: {
+  attendeeId: string;
+  passes: { outbound: string | null; return: string | null };
+}) {
+  const outbound = usePassSlot(boardingPassCandidates(attendeeId, 'outbound'), passes.outbound);
+  const ret = usePassSlot(boardingPassCandidates(attendeeId, 'return'), passes.return);
   const [fullscreen, setFullscreen] = useState<string | null>(null);
 
   const hasPass = Boolean(outbound.src || ret.src);

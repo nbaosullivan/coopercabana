@@ -9,7 +9,13 @@ import { useUser } from './UserProvider';
 import TaxiClusters from './TaxiClusters';
 import BoardingPassCard from './BoardingPassCard';
 
-export default function FlightsView({ attendees }: { attendees: PublicAttendee[] }) {
+export default function FlightsView({
+  attendees,
+  passes,
+}: {
+  attendees: PublicAttendee[];
+  passes: { outbound: string | null; return: string | null };
+}) {
   const { user, setUser } = useUser();
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
@@ -197,7 +203,7 @@ export default function FlightsView({ attendees }: { attendees: PublicAttendee[]
         </form>
       </div>
 
-      <BoardingPassCard attendeeId={user.id} />
+      <BoardingPassCard attendeeId={user.id} passes={passes} />
 
       <TaxiClusters attendees={attendees} />
     </div>
