@@ -35,7 +35,7 @@ function PassImage({
       aria-label={`Open ${label} boarding pass full screen`}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={src} alt={label} className="max-h-56 w-full object-contain" />
+      <img src={src} alt={label} className="h-auto w-full object-contain" />
     </button>
   );
 }
@@ -61,7 +61,7 @@ export default function BoardingPassCard({
         <h2 className="text-sm font-semibold text-zinc-200">Boarding passes</h2>
       </div>
 
-      <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-2 items-start gap-3">
         {outbound.src && (
           <div>
             <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-zinc-500">
