@@ -3,6 +3,7 @@ import { mockDb } from './mockData';
 import {
   Attendee,
   ScheduleItem,
+  ScheduleDay,
   Expense,
   ExpenseAllocation,
   FlightData,
@@ -113,6 +114,57 @@ export async function getScheduleItems(): Promise<ScheduleItem[]> {
       ? a.day_number - b.day_number
       : a.start_time.localeCompare(b.start_time)
   );
+}
+
+// --- Schedule day locks -----------------------------------------------------
+
+export async function getScheduleDayLocks(): Promise<ScheduleDay[]> {
+  if (isSupabaseConfigured && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('schedule_days')
+        .select('*')
+        .order('day_number');
+      if (error) throw error;
+      return data as ScheduleDay[];
+    } catch {
+      // schedule_days may not exist yet (schema.sql not applied in Supabase).
+      // Degrade to all-locked — nothing leaks, and the admin unlock just
+      // won't work until the table is created.
+      return [];
+    }
+  }
+  return [...mockDb.scheduleDays]
+    .sort((a, b) => a.day_number - b.day_number)
+    .map((d) => ({ ...d }));
+}
+
+export async function toggleScheduleDayLock(day: number, isLocked: boolean): Promise<ScheduleDay> {
+  if (isSupabaseConfigured && supabase) {
+    const { data, error } = await supabase
+      .from('schedule_days')
+      .update({ is_locked: isLocked, updated_at: new Date().toISOString() })
+      .eq('day_number', day)
+      .select()
+      .single();
+    if (error) {
+      if (error.code === 'PGRST205') {
+        // schedule_days doesn't exist in this Supabase project yet — the
+        // schema.sql update hasn't been run there. Surface a clear,
+        // actionable message instead of a raw Postgrest error.
+        throw new Error(
+          "The schedule_days table doesn't exist yet — run the updated schema.sql in the Supabase SQL editor to enable day locking."
+        );
+      }
+      throw error;
+    }
+    return data as ScheduleDay;
+  }
+
+  const row = mockDb.scheduleDays.find((d) => d.day_number === day);
+  if (!row) throw new Error(`No lock state for day ${day}`);
+  row.is_locked = isLocked;
+  return { ...row };
 }
 
 // --- Expenses --------------------------------------------------------------

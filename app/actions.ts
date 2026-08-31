@@ -12,6 +12,7 @@ import {
   FinancesSummary,
   GroupOverviewRow,
   ScheduleItem,
+  ScheduleDay,
   LandingPageKey,
   LANDING_PAGES,
   DEFAULT_LANDING_PAGE,
@@ -63,6 +64,16 @@ export async function getDefaultLandingPage(): Promise<LandingPageKey> {
   return (LANDING_PAGES as readonly string[]).includes(value ?? '')
     ? (value as LandingPageKey)
     : DEFAULT_LANDING_PAGE;
+}
+
+/**
+ * The attendee id of "the stag" — the one person kept off the Money tab so
+ * the group can sort out costs without them seeing it. Configured via the
+ * `stag_attendee_id` settings row; returns null when unset (nobody hidden).
+ */
+export async function getStagAttendeeId(): Promise<string | null> {
+  const value = await db.getSetting('stag_attendee_id');
+  return value && value.trim() !== '' ? value : null;
 }
 
 // --- Flights -------------------------------------------------------------
@@ -188,4 +199,21 @@ export async function getItinerary(): Promise<Record<number, ScheduleItem[]>> {
     grouped[item.day_number].push(item);
   }
   return grouped;
+}
+
+/** Which itinerary days are unlocked for the group (default: none). */
+export async function getDayLocks(): Promise<ScheduleDay[]> {
+  return db.getScheduleDayLocks();
+}
+
+/**
+ * Admin-only. Unlock (isLocked=false) or re-lock a schedule day so its
+ * contents stay hidden from the group until the organiser reveals them.
+ */
+export async function toggleDayLock(day: number, isLocked: boolean): Promise<void> {
+  const me = await getCurrentUser();
+  if (!me?.is_admin) throw new Error('Admin only');
+  await db.toggleScheduleDayLock(day, isLocked);
+  revalidatePath('/schedule');
+  revalidatePath('/');
 }

@@ -1,6 +1,7 @@
 import {
   Attendee,
   ScheduleItem,
+  ScheduleDay,
   Expense,
   ExpenseAllocation,
   Game,
@@ -27,6 +28,7 @@ const globalForMock = globalThis as unknown as {
   __stagMock?: {
     attendees: Attendee[];
     scheduleItems: ScheduleItem[];
+    scheduleDays: ScheduleDay[];
     expenses: Expense[];
     expenseAllocations: ExpenseAllocation[];
     settings: Record<string, string>;
@@ -223,7 +225,17 @@ function seed() {
 
   const settings: Record<string, string> = {
     default_landing_page: 'money',
+    // "The stag" — hidden from the Money tab. Matches Cooper (The Stag) in
+    // this mock dataset; wire this to the real settings row in Supabase.
+    stag_attendee_id: '22222222-2222-2222-2222-222222222222',
   };
+
+  // Itinerary days start locked — the schedule is a secret until an admin
+  // unlocks each day (see toggleDayLock in app/actions.ts).
+  const scheduleDays: ScheduleDay[] = [1, 2, 3, 4].map((day_number) => ({
+    day_number,
+    is_locked: true,
+  }));
 
   const assassinActions = [
     'Do ten press-ups',
@@ -289,6 +301,7 @@ function seed() {
   return {
     attendees,
     scheduleItems,
+    scheduleDays,
     expenses,
     expenseAllocations,
     settings,

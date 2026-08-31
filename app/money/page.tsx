@@ -1,9 +1,17 @@
-import { getCurrentUser, getFinancesForUser, getGroupOverview, getAllAllocationsForAdmin } from '@/app/actions';
+import { redirect } from 'next/navigation';
+import {
+  getCurrentUser,
+  getFinancesForUser,
+  getGroupOverview,
+  getAllAllocationsForAdmin,
+  getStagAttendeeId,
+} from '@/app/actions';
 import MoneyView from '@/components/MoneyView';
 
 export default async function MoneyPage() {
-  const user = await getCurrentUser();
+  const [user, stagAttendeeId] = await Promise.all([getCurrentUser(), getStagAttendeeId()]);
   if (!user) return null;
+  if (user.id === stagAttendeeId) redirect('/schedule');
 
   const [finances, groupOverview, adminAllocations] = await Promise.all([
     getFinancesForUser(user.id),

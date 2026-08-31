@@ -12,16 +12,24 @@ const TABS = [
   { href: '/tasks', label: 'Tasks', icon: CheckSquare },
 ];
 
-export default function BottomNav({ pendingGameCount = 0 }: { pendingGameCount?: number }) {
+export default function BottomNav({
+  pendingGameCount = 0,
+  hideMoneyTab = false,
+}: {
+  pendingGameCount?: number;
+  hideMoneyTab?: boolean;
+}) {
   const pathname = usePathname();
   const { user } = useUser();
 
   if (!user) return null;
 
+  const tabs = hideMoneyTab ? TABS.filter((t) => t.href !== '/money') : TABS;
+
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800/80 bg-zinc-950/95 backdrop-blur">
       <div className="mx-auto flex max-w-lg items-stretch justify-around px-2 pb-[env(safe-area-inset-bottom)]">
-        {TABS.map(({ href, label, icon: Icon }) => {
+        {tabs.map(({ href, label, icon: Icon }) => {
           const active = pathname?.startsWith(href);
           const showBadge = href === '/tasks' && pendingGameCount > 0;
           return (

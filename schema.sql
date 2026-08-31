@@ -8,6 +8,7 @@ create extension if not exists "pgcrypto";
 DROP TABLE IF EXISTS expense_allocations;
 DROP TABLE IF EXISTS expenses;
 DROP TABLE IF EXISTS schedule_items;
+DROP TABLE IF EXISTS schedule_days;
 DROP TABLE IF EXISTS attendees;
 DROP TABLE IF EXISTS settings;
 
@@ -46,6 +47,14 @@ CREATE TABLE schedule_items (
   uber_url TEXT
 );
 
+-- 2b. Per-day lock state. Days start locked so the itinerary stays a secret
+-- until an admin (the organiser) unlocks each day for the group.
+CREATE TABLE schedule_days (
+  day_number INT PRIMARY KEY CHECK (day_number BETWEEN 1 AND 4),
+  is_locked BOOLEAN NOT NULL DEFAULT TRUE,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- 3. Expenses
 CREATE TABLE expenses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -72,6 +81,12 @@ CREATE TABLE expense_allocations (
 INSERT INTO settings (key, value) VALUES
 ('default_landing_page', 'money');
 
+-- Which attendee is "the stag" — they don't see the Money tab (their group
+-- shouldn't be discussing costs in front of them). Set to an attendee id to
+-- hide Money for that person; leave unset/blank to show Money for everyone.
+INSERT INTO settings (key, value) VALUES
+('stag_attendee_id', '22222222-2222-2222-2222-222222222222');
+
 INSERT INTO attendees (id, name, pin, is_admin, tshirt_size, flights_booked, outbound_flight_details, outbound_arrival_time, return_flight_details, return_departure_time) VALUES
 ('11111111-1111-1111-1111-111111111111', 'Nick (Organiser)', '1234', TRUE, 'L', TRUE, 'EZY8201 (GVA -> AGP)', '2026-09-01T12:30:00Z', 'EZY8202 (AGP -> GVA)', '2026-09-04T16:00:00Z'),
 ('22222222-2222-2222-2222-222222222222', 'Cooper (The Stag)', '1234', FALSE, 'XL', TRUE, 'BA0452 (LHR -> AGP)', '2026-09-01T10:00:00Z', 'BA0453 (AGP -> LHR)', '2026-09-04T18:15:00Z'),
@@ -83,6 +98,15 @@ INSERT INTO schedule_items (day_number, start_time, end_time, title, description
 (1, '20:00', '23:30', 'Tapas & Old Town Drinks', 'Casual dinner in downtown historic center.', 'El Pimpi', 'Calle Granada 62, Málaga', 'https://maps.google.com/?q=El+Pimpi+Malaga', 'https://m.uber.com/ul/?action=setPickup&dropoff[formatted_address]=Calle%20Granada%2062%2C%20M%C3%A1laga'),
 (2, '11:00', '14:00', '270cc Outdoor Go-Karting Championship', 'Grand Prix format: Qualifying + 20-lap race. Trophy for 1st.', 'Karting Experience', 'Carretera Coín Km 5, Málaga', 'https://maps.google.com/?q=Karting+Experience+Malaga', 'https://m.uber.com/ul/?action=setPickup&dropoff[formatted_address]=Carretera%20Co%C3%ADn%20Km%205%2C%20M%C3%A1laga'),
 (2, '17:00', '21:00', 'Sunset Catamaran Boat Party', '4-hour cruise with open bar and DJ set.', 'Puerto Marina', 'Paseo Marítimo, Benalmádena', 'https://maps.google.com/?q=Puerto+Marina+Benalmadena', 'https://m.uber.com/ul/?action=setPickup&dropoff[formatted_address]=Puerto%20Marina%20Benalm%C3%A1dena');
+
+-- All days start locked: the itinerary is a secret until the organiser
+-- unlocks each day. Flip a row to FALSE here (or via the admin toggle in
+-- the app) to reveal that day to the group.
+INSERT INTO schedule_days (day_number, is_locked) VALUES
+(1, TRUE),
+(2, TRUE),
+(3, TRUE),
+(4, TRUE);
 
 INSERT INTO expenses (id, title, total_cost, notes) VALUES
 ('e1111111-1111-1111-1111-111111111111', 'Luxury Villa (4 Nights)', 1200.00, 'Revolut / Bank Transfer to Nick'),
@@ -102,6 +126,7 @@ INSERT INTO expense_allocations (expense_id, attendee_id, amount_owed, amount_pa
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE attendees ENABLE ROW LEVEL SECURITY;
 ALTER TABLE schedule_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE schedule_days ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expense_allocations ENABLE ROW LEVEL SECURITY;
 
@@ -109,6 +134,10 @@ ALTER TABLE expense_allocations ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "public read settings" ON settings FOR SELECT USING (true);
 CREATE POLICY "public read/write attendees" ON attendees FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "public read schedule_items" ON schedule_items FOR SELECT USING (true);
+-- schedule_days is readable by everyone; the admin-only unlock is enforced in
+-- the server action (app/actions.ts), matching the app-wide pattern where the
+-- anon key is permissive and the session cookie gates writes.
+CREATE POLICY "public read/write schedule_days" ON schedule_days FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "public read expenses" ON expenses FOR SELECT USING (true);
 CREATE POLICY "public read/write expense_allocations" ON expense_allocations FOR ALL USING (true) WITH CHECK (true);
 

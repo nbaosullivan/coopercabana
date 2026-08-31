@@ -38,6 +38,15 @@ export interface ScheduleItem {
   uber_url: string | null;
 }
 
+/**
+ * Lock state for one itinerary day. Days start locked so the itinerary stays
+ * a secret until an admin (the organiser) unlocks them for the group.
+ */
+export interface ScheduleDay {
+  day_number: number;
+  is_locked: boolean;
+}
+
 export interface Expense {
   id: string;
   title: string;
