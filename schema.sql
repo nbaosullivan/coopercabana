@@ -20,10 +20,12 @@ CREATE TABLE settings (
 );
 
 -- 1. Attendees
+-- pin: the attendee's personal 4-digit login PIN. '*' means "not set yet" —
+-- they log in once with the group password and set their own PIN.
 CREATE TABLE attendees (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
-  pin TEXT NOT NULL DEFAULT '1234',
+  pin TEXT NOT NULL DEFAULT '*',
   is_admin BOOLEAN DEFAULT FALSE,
   tshirt_size TEXT DEFAULT NULL CHECK (tshirt_size IN ('S', 'M', 'L', 'XL', '2XL', '3XL')),
   flights_booked BOOLEAN DEFAULT FALSE,
@@ -95,10 +97,10 @@ INSERT INTO settings (key, value) VALUES
 ('hide_checklist', 'false');
 
 INSERT INTO attendees (id, name, pin, is_admin, tshirt_size, flights_booked, outbound_flight_details, outbound_arrival_time, return_flight_details, return_departure_time) VALUES
-('11111111-1111-1111-1111-111111111111', 'Nick (Organiser)', '1234', TRUE, 'L', TRUE, 'EZY8201 (GVA -> AGP)', '2026-09-01T12:30:00Z', 'EZY8202 (AGP -> GVA)', '2026-09-04T16:00:00Z'),
-('22222222-2222-2222-2222-222222222222', 'Cooper (The Stag)', '1234', FALSE, 'XL', TRUE, 'BA0452 (LHR -> AGP)', '2026-09-01T10:00:00Z', 'BA0453 (AGP -> LHR)', '2026-09-04T18:15:00Z'),
-('33333333-3333-3333-3333-333333333333', 'Carl', '1234', FALSE, 'M', FALSE, NULL, NULL, NULL, NULL),
-('44444444-4444-4444-4444-444444444444', 'Dave', '1234', FALSE, 'L', TRUE, 'FR2104 (STN -> AGP)', '2026-09-01T13:10:00Z', 'FR2105 (AGP -> STN)', '2026-09-04T14:30:00Z');
+('11111111-1111-1111-1111-111111111111', 'Nick (Organiser)', '*', TRUE, 'L', TRUE, 'EZY8201 (GVA -> AGP)', '2026-09-01T12:30:00Z', 'EZY8202 (AGP -> GVA)', '2026-09-04T16:00:00Z'),
+('22222222-2222-2222-2222-222222222222', 'Cooper (The Stag)', '*', FALSE, 'XL', TRUE, 'BA0452 (LHR -> AGP)', '2026-09-01T10:00:00Z', 'BA0453 (AGP -> LHR)', '2026-09-04T18:15:00Z'),
+('33333333-3333-3333-3333-333333333333', 'Carl', '*', FALSE, 'M', FALSE, NULL, NULL, NULL, NULL),
+('44444444-4444-4444-4444-444444444444', 'Dave', '*', FALSE, 'L', TRUE, 'FR2104 (STN -> AGP)', '2026-09-01T13:10:00Z', 'FR2105 (AGP -> STN)', '2026-09-04T14:30:00Z');
 
 INSERT INTO schedule_items (day_number, start_time, end_time, title, description, location_name, address, google_maps_url, uber_url) VALUES
 (1, '15:00', '19:00', 'Villa Check-In & Welcome Drinks', 'Grab rooms, stock fridge, get pool ready.', 'Villa Coopercabana', 'Calle Benalmádena 12, Málaga', 'https://maps.google.com/?q=Calle+Benalmadena+12+Malaga', 'https://m.uber.com/ul/?action=setPickup&dropoff[formatted_address]=Calle%20Benalm%C3%A1dena%2012%2C%20M%C3%A1laga'),

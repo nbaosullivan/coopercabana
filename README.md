@@ -1,8 +1,8 @@
 # Málaga Stag 2026 — Stag Do Organiser
 
 A mobile-first, zero-friction event app for organising a stag do: itinerary, shared
-expenses, flight coordination, and a checklist — all behind a 4-digit PIN, no email
-or password required.
+expenses, flight coordination, and a checklist — each attendee signs in with their
+own 4-digit PIN (set once via the group password on first login).
 
 ## Stack
 
@@ -21,8 +21,9 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000). With no `.env.local`, the app
 automatically uses the in-memory mock dataset in `lib/mockData.ts` — pre-seeded
-with 4 attendees, a Day 1–2 itinerary, and sample expenses. Every attendee's PIN
-is `1234` (Nick is the admin).
+with 4 attendees, a Day 1–2 itinerary, and sample expenses. No PINs are set yet
+(`'*'`), so sign in with the group password (`coops`) and you'll be asked to
+create your own PIN (Nick is the admin).
 
 ## Connecting a real Supabase project (optional)
 
@@ -54,13 +55,14 @@ is `1234` (Nick is the admin).
 
 ## How login works
 
-There are no emails, magic links, or password resets. On first visit, each
-person picks their name from a dropdown and enters their 4-digit PIN
-(default `1234`). On success, a `stag_user_id` HTTP-only cookie is set so the
-session survives app restarts. "Switch user" in the account menu clears it.
+There are no emails, magic links, or password resets. Each person picks their
+name from a dropdown and signs in with a personal 4-digit PIN. On success, a
+`stag_user_id` HTTP-only cookie is set so the session survives app restarts.
+"Switch user" in the account menu clears it.
 
-Admins (`is_admin = true`, Nick by default) can reset anyone's PIN from the
-Tasks tab.
+First time in (PIN column is `'*'`, meaning "not set"), they log in with the
+shared group password and are prompted to set their own 4-digit PIN. From then
+on that PIN is theirs alone; the group password no longer gets them in.
 
 ## Project structure
 

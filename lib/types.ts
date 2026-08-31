@@ -22,8 +22,18 @@ export interface Attendee {
   return_departure_time: string | null;
 }
 
-/** Attendee shape safe to send to the client — never includes the PIN. */
-export type PublicAttendee = Omit<Attendee, 'pin'>;
+/**
+ * Sentinel stored in the NOT NULL `pin` column for attendees who haven't
+ * picked a personal PIN yet. They log in once with the group password and
+ * are prompted to set their own PIN, which replaces this value.
+ */
+export const PIN_UNSET = '*';
+
+/**
+ * Attendee shape safe to send to the client — never includes the PIN value,
+ * only whether one has been set (so the login screen can prompt correctly).
+ */
+export type PublicAttendee = Omit<Attendee, 'pin'> & { has_pin: boolean };
 
 export interface ScheduleItem {
   id: string;
@@ -92,6 +102,8 @@ export interface LoginResult {
   success: boolean;
   error?: string;
   attendee?: PublicAttendee;
+  /** True when they logged in via group password and must now set a PIN. */
+  needsPinSetup?: boolean;
 }
 
 // --- Games engine ---------------------------------------------------------
@@ -234,5 +246,5 @@ export interface GameSnapshot {
 
 export function stripPin(a: Attendee): PublicAttendee {
   const { pin, ...rest } = a;
-  return rest;
+  return { ...rest, has_pin: pin !== PIN_UNSET };
 }

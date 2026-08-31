@@ -49,7 +49,7 @@ function seed() {
     {
       id: '11111111-1111-1111-1111-111111111111',
       name: 'Nick (Organiser)',
-      pin: '1234',
+      pin: '*',
       is_admin: true,
       tshirt_size: 'L',
       flights_booked: true,
@@ -61,7 +61,7 @@ function seed() {
     {
       id: '22222222-2222-2222-2222-222222222222',
       name: 'Cooper (The Stag)',
-      pin: '1234',
+      pin: '*',
       is_admin: false,
       tshirt_size: 'XL',
       flights_booked: true,
@@ -73,7 +73,7 @@ function seed() {
     {
       id: '33333333-3333-3333-3333-333333333333',
       name: 'Carl',
-      pin: '1234',
+      pin: '*',
       is_admin: false,
       tshirt_size: 'M',
       flights_booked: false,
@@ -85,7 +85,7 @@ function seed() {
     {
       id: '44444444-4444-4444-4444-444444444444',
       name: 'Dave',
-      pin: '1234',
+      pin: '*',
       is_admin: false,
       tshirt_size: 'L',
       flights_booked: true,
@@ -322,3 +322,14 @@ if (!globalForMock.__stagMock) {
 }
 
 export const mockDb = globalForMock.__stagMock;
+
+/** Re-seed the mock store from scratch. Useful for tests. Mutates the
+ * existing object in place so already-captured `mockDb` references (including
+ * the one in lib/db.ts) see the fresh data. */
+export function resetMock(): void {
+  const fresh = seed();
+  const current = globalForMock.__stagMock as Record<string, unknown>;
+  for (const key of Object.keys(current)) {
+    current[key] = (fresh as unknown as Record<string, unknown>)[key];
+  }
+}

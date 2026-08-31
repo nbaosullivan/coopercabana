@@ -5,6 +5,7 @@ import * as db from '@/lib/db';
 import { setSessionCookie, clearSessionCookie, getSessionAttendeeId } from '@/lib/session';
 import {
   stripPin,
+  PIN_UNSET,
   FlightData,
   TshirtSize,
   LoginResult,
@@ -20,29 +21,63 @@ import {
 
 // --- Auth --------------------------------------------------------------
 
-// Shared app password — a lightweight gate for the group (everyone uses
-// "coops"). Override via APP_PASSWORD env var to change it without a code edit.
+// Shared app password — the one-time fallback for attendees who haven't
+// set a personal PIN yet. They log in with it once, set their own PIN,
+// and from then on use that PIN instead. Override via APP_PASSWORD env var
+// to change it without a code edit.
 const APP_PASSWORD = process.env.APP_PASSWORD ?? 'coops';
+
+/** A valid PIN is exactly 4 digits. */
+const PIN_PATTERN = /^\d{4}$/;
 
 export async function getAttendeeList(): Promise<PublicAttendee[]> {
   const attendees = await db.getAttendees();
   return attendees.map(stripPin);
 }
 
-export async function loginUser(attendeeId: string, password: string): Promise<LoginResult> {
+export async function loginUser(attendeeId: string, secret: string): Promise<LoginResult> {
   if (!attendeeId) {
     return { success: false, error: 'Pick your name first.' };
-  }
-  if (password !== APP_PASSWORD) {
-    return { success: false, error: 'Wrong password. Try again.' };
   }
   const attendee = await db.getAttendeeById(attendeeId);
   if (!attendee) {
     return { success: false, error: 'Attendee not found.' };
   }
+
+  // No personal PIN yet — the group password gets them in once, then they
+  // must set their own PIN (see setPin below). No revalidatePath here:
+  // the client swaps in the logged-in tree and refreshes the router
+  // afterwards (see LoginModal), which avoids racing that client update.
+  if (attendee.pin === PIN_UNSET) {
+    if (secret !== APP_PASSWORD) {
+      return { success: false, error: 'Wrong group password. Try again.' };
+    }
+    setSessionCookie(attendee.id);
+    return { success: true, attendee: stripPin(attendee), needsPinSetup: true };
+  }
+
+  if (secret !== attendee.pin) {
+    return { success: false, error: 'Wrong PIN. Try again.' };
+  }
   setSessionCookie(attendee.id);
-  revalidatePath('/');
   return { success: true, attendee: stripPin(attendee) };
+}
+
+/**
+ * Set (or change) the signed-in attendee's personal PIN. Requires a live
+ * session for that attendee, so it only works right after logging in —
+ * you can't set someone else's PIN.
+ */
+export async function setPin(attendeeId: string, pin: string): Promise<LoginResult> {
+  if (!PIN_PATTERN.test(pin)) {
+    return { success: false, error: 'PIN must be 4 digits.' };
+  }
+  const sessionId = getSessionAttendeeId();
+  if (!sessionId || sessionId !== attendeeId) {
+    return { success: false, error: 'Sign in first, then set your PIN.' };
+  }
+  const updated = await db.updateAttendeePin(attendeeId, pin);
+  return { success: true, attendee: stripPin(updated) };
 }
 
 export async function logoutUser(): Promise<void> {

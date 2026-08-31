@@ -97,6 +97,23 @@ export async function updateAttendeeTshirt(attendeeId: string, size: TshirtSize)
   return attendee;
 }
 
+export async function updateAttendeePin(attendeeId: string, pin: string): Promise<Attendee> {
+  if (isSupabaseConfigured && supabase) {
+    const { data: updated, error } = await supabase
+      .from('attendees')
+      .update({ pin })
+      .eq('id', attendeeId)
+      .select()
+      .single();
+    if (error) throw error;
+    return updated as Attendee;
+  }
+  const attendee = mockDb.attendees.find((a) => a.id === attendeeId);
+  if (!attendee) throw new Error('Attendee not found');
+  attendee.pin = pin;
+  return attendee;
+}
+
 // --- Schedule ------------------------------------------------------------
 
 export async function getScheduleItems(): Promise<ScheduleItem[]> {
