@@ -108,7 +108,7 @@ export default function BoardingPassCard({
                 e.stopPropagation();
                 setFullscreen(null);
               }}
-              className="flex items-center gap-1.5 rounded-xl border border-zinc-600 bg-zinc-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-700"
+              className="flex items-center gap-1.5 rounded-xl border border-zinc-300 bg-zinc-100 px-4 py-2 text-sm font-semibold text-zinc-900 transition hover:bg-zinc-200"
             >
               <X className="h-4 w-4" /> Close
             </button>
