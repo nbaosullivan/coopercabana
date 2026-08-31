@@ -4,6 +4,9 @@ const nextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
+    outputFileTracingIncludes: {
+      '/boarding/[file]': ['./boarding/**'],
+    },
   },
 };
 
