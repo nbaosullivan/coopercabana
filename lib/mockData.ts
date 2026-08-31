@@ -228,6 +228,9 @@ function seed() {
     // "The stag" — hidden from the Money tab. Matches Cooper (The Stag) in
     // this mock dataset; wire this to the real settings row in Supabase.
     stag_attendee_id: '22222222-2222-2222-2222-222222222222',
+    // Set to 'true' to hide the personal checklist card and rename the tab
+    // to "Games" everywhere once T-shirts/flights admin is no longer needed.
+    hide_checklist: 'false',
   };
 
   // Itinerary days start locked — the schedule is a secret until an admin

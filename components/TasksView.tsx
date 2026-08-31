@@ -15,11 +15,13 @@ export default function TasksView({
   groupOverview,
   snapshots,
   me,
+  hideChecklist = false,
 }: {
   allAttendees: PublicAttendee[];
   groupOverview: GroupOverviewRow[];
   snapshots: GameSnapshot[];
   me: PublicAttendee | null;
+  hideChecklist?: boolean;
 }) {
   const { user, setUser } = useUser();
   const { format } = useCurrency();
@@ -46,54 +48,56 @@ export default function TasksView({
   return (
     <div className="space-y-6">
       {/* Personal checklist */}
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
-        <h2 className="mb-4 text-sm font-semibold text-zinc-200">Your checklist</h2>
+      {!hideChecklist && (
+        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
+          <h2 className="mb-4 text-sm font-semibold text-zinc-200">Your checklist</h2>
 
-        <div className="mb-4">
-          <label className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-zinc-500">
-            <Shirt className="h-3.5 w-3.5" /> T-shirt size
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {SIZES.map((size) => (
-              <button
-                key={size}
-                onClick={() => handleTshirtChange(size)}
-                disabled={isPending}
-                className={`rounded-lg px-3.5 py-2 text-sm font-semibold transition ${
-                  user.tshirt_size === size
-                    ? 'bg-emerald-500 text-cream'
-                    : 'border border-zinc-700 bg-zinc-950 text-zinc-300'
+          <div className="mb-4">
+            <label className="mb-1.5 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-zinc-500">
+              <Shirt className="h-3.5 w-3.5" /> T-shirt size
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {SIZES.map((size) => (
+                <button
+                  key={size}
+                  onClick={() => handleTshirtChange(size)}
+                  disabled={isPending}
+                  className={`rounded-lg px-3.5 py-2 text-sm font-semibold transition ${
+                    user.tshirt_size === size
+                      ? 'bg-emerald-500 text-cream'
+                      : 'border border-zinc-700 bg-zinc-950 text-zinc-300'
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between border-t border-zinc-800 pt-4">
+            <span className="text-sm text-zinc-300">Flights booked</span>
+            <button
+              onClick={handleFlightToggle}
+              disabled={isPending}
+              className={`relative h-7 w-12 rounded-full transition ${
+                user.flights_booked ? 'bg-emerald-500' : 'bg-zinc-700'
+              }`}
+            >
+              <span
+                className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                  user.flights_booked ? 'translate-x-5' : ''
                 }`}
-              >
-                {size}
-              </button>
-            ))}
+              />
+            </button>
           </div>
         </div>
-
-        <div className="flex items-center justify-between border-t border-zinc-800 pt-4">
-          <span className="text-sm text-zinc-300">Flights booked</span>
-          <button
-            onClick={handleFlightToggle}
-            disabled={isPending}
-            className={`relative h-7 w-12 rounded-full transition ${
-              user.flights_booked ? 'bg-emerald-500' : 'bg-zinc-700'
-            }`}
-          >
-            <span
-              className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                user.flights_booked ? 'translate-x-5' : ''
-              }`}
-            />
-          </button>
-        </div>
-      </div>
+      )}
 
       {/* Games */}
       <GamesPanel snapshots={snapshots} me={me ?? user} allAttendees={allAttendees} />
 
       {/* Admin dashboard */}
-      {user.is_admin && (
+      {user.is_admin && !hideChecklist && (
         <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-5">
           <h2 className="mb-4 text-sm font-semibold text-zinc-200">Admin dashboard</h2>
 

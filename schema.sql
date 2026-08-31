@@ -87,6 +87,13 @@ INSERT INTO settings (key, value) VALUES
 INSERT INTO settings (key, value) VALUES
 ('stag_attendee_id', '22222222-2222-2222-2222-222222222222');
 
+-- Once T-shirts + flights are sorted, the personal checklist card on the
+-- Tasks tab is dead weight — set to 'true' to hide it. The tab then renames
+-- itself "Games" everywhere (nav label + page title) since that's all that's
+-- left there. Any other value (or missing row) keeps the checklist visible.
+INSERT INTO settings (key, value) VALUES
+('hide_checklist', 'false');
+
 INSERT INTO attendees (id, name, pin, is_admin, tshirt_size, flights_booked, outbound_flight_details, outbound_arrival_time, return_flight_details, return_departure_time) VALUES
 ('11111111-1111-1111-1111-111111111111', 'Nick (Organiser)', '1234', TRUE, 'L', TRUE, 'EZY8201 (GVA -> AGP)', '2026-09-01T12:30:00Z', 'EZY8202 (AGP -> GVA)', '2026-09-04T16:00:00Z'),
 ('22222222-2222-2222-2222-222222222222', 'Cooper (The Stag)', '1234', FALSE, 'XL', TRUE, 'BA0452 (LHR -> AGP)', '2026-09-01T10:00:00Z', 'BA0453 (AGP -> LHR)', '2026-09-04T18:15:00Z'),

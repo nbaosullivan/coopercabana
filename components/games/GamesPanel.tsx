@@ -1,5 +1,6 @@
 'use client';
 
+import { PartyPopper } from 'lucide-react';
 import { GameSnapshot, PublicAttendee } from '@/lib/types';
 import { getGameKind } from '@/lib/games/registry';
 import NewGameCard from './NewGameCard';
@@ -15,7 +16,18 @@ export default function GamesPanel({
   me: PublicAttendee;
   allAttendees: PublicAttendee[];
 }) {
-  if (snapshots.length === 0 && !me.is_admin) return null;
+  if (snapshots.length === 0 && !me.is_admin) {
+    return (
+      <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 text-center">
+        <PartyPopper className="mx-auto mb-3 h-6 w-6 text-emerald-500" />
+        <p className="text-sm font-semibold text-zinc-200">No games live yet</p>
+        <p className="mt-1 text-sm text-zinc-500">
+          The organiser hasn&rsquo;t kicked one off. Assassin and SKATE are loaded up and
+          ready to go - check back soon.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

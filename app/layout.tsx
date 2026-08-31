@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import { getCurrentUser, getAttendeeList, getFinancesForUser, getStagAttendeeId } from '@/app/actions';
+import { getCurrentUser, getAttendeeList, getFinancesForUser, getStagAttendeeId, getHideChecklist } from '@/app/actions';
 import { getPendingGameCount } from '@/app/games/actions';
 import UserProvider from '@/components/UserProvider';
 import CurrencyProvider from '@/components/CurrencyProvider';
@@ -35,10 +35,11 @@ export const viewport: Viewport = {
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [user, attendees, stagAttendeeId] = await Promise.all([
+  const [user, attendees, stagAttendeeId, hideChecklist] = await Promise.all([
     getCurrentUser(),
     getAttendeeList(),
     getStagAttendeeId(),
+    getHideChecklist(),
   ]);
   const isStag = user != null && user.id === stagAttendeeId;
   const finances = user ? await getFinancesForUser(user.id) : null;
@@ -51,9 +52,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <CurrencyProvider>
             {/* The stag doesn't see money owed either — it's the same info
                 the Money tab hides, just surfaced via the header banner. */}
-            <Header totalOutstanding={isStag ? 0 : (finances?.totalOutstanding ?? 0)} />
+            <Header
+              totalOutstanding={isStag ? 0 : (finances?.totalOutstanding ?? 0)}
+              hideChecklist={hideChecklist}
+            />
             <main className="mx-auto max-w-lg px-4 pb-28 pt-4">{children}</main>
-            <BottomNav pendingGameCount={pendingGameCount} hideMoneyTab={isStag} />
+            <BottomNav
+              pendingGameCount={pendingGameCount}
+              hideMoneyTab={isStag}
+              tasksLabel={hideChecklist ? 'Games' : 'Tasks'}
+            />
             <ScrollToTop />
             <ServiceWorkerRegister />
           </CurrencyProvider>

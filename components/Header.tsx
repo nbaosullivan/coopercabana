@@ -10,9 +10,10 @@ import { logoutUser } from '@/app/actions';
 
 interface Props {
   totalOutstanding: number;
+  hideChecklist?: boolean;
 }
 
-export default function Header({ totalOutstanding }: Props) {
+export default function Header({ totalOutstanding, hideChecklist = false }: Props) {
   const { user, setUser } = useUser();
   const { currency, setCurrency, format } = useCurrency();
   const router = useRouter();
@@ -27,7 +28,8 @@ export default function Header({ totalOutstanding }: Props) {
     router.refresh();
   }
 
-  const needsTshirt = !user.tshirt_size;
+  // Once the checklist is hidden there's no way to act on this nag, so drop it.
+  const needsTshirt = !hideChecklist && !user.tshirt_size;
   const owesMoney = totalOutstanding > 0;
 
   let banner: { tone: 'amber' | 'red' | 'emerald'; icon: JSX.Element; text: string } | null = null;

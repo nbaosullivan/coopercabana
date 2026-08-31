@@ -15,16 +15,20 @@ const TABS = [
 export default function BottomNav({
   pendingGameCount = 0,
   hideMoneyTab = false,
+  tasksLabel = 'Tasks',
 }: {
   pendingGameCount?: number;
   hideMoneyTab?: boolean;
+  tasksLabel?: string;
 }) {
   const pathname = usePathname();
   const { user } = useUser();
 
   if (!user) return null;
 
-  const tabs = hideMoneyTab ? TABS.filter((t) => t.href !== '/money') : TABS;
+  const tabs = (hideMoneyTab ? TABS.filter((t) => t.href !== '/money') : TABS).map((t) =>
+    t.href === '/tasks' ? { ...t, label: tasksLabel } : t
+  );
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-zinc-800/80 bg-zinc-950/95 backdrop-blur">

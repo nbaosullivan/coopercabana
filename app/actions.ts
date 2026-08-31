@@ -76,6 +76,17 @@ export async function getStagAttendeeId(): Promise<string | null> {
   return value && value.trim() !== '' ? value : null;
 }
 
+/**
+ * When true, the Tasks tab's personal checklist (T-shirt size, flights
+ * toggle) is hidden and the tab is relabelled "Games" everywhere (nav +
+ * page title), since games are all that's left there. Configured via the
+ * `hide_checklist` settings row.
+ */
+export async function getHideChecklist(): Promise<boolean> {
+  const value = await db.getSetting('hide_checklist');
+  return value === 'true';
+}
+
 // --- Flights -------------------------------------------------------------
 
 export async function updateFlightDetails(attendeeId: string, data: FlightData): Promise<PublicAttendee> {
